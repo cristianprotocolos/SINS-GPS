@@ -299,7 +299,7 @@ J = sqrt(sum(R))
 
 %end
 
-k=0.77;
+%k=0.77;
 % az_max=0.37;
 % az_min=-0.32;
 % L = k*(az_max - az_min)^(1/4)
