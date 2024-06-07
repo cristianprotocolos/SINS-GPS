@@ -2,7 +2,6 @@ clear
 clc
 close all
 
-
 %% Optimizacion
 %% Modelo
 bias = [-0.00703865554468412	0.119189157604515 0];
