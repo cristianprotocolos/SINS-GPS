@@ -115,10 +115,12 @@ for k=1:N
     else
         C_3(k) = 0;
      end
+
+     Cs(k) = C_1(k) * C_2(k) * C_3(k);
     %% FILTRO DE KALMAN EXTENDIDO
     
     % Prediccion
-    A_k = [I I*Ts O ; O I*Cs O ; 0 0 0 0 0 0];
+    A_k = [I I*Ts O ; O I*Cs(k) O ; 0 0 0 0 0 0];
     A_k(:,end) = [];
     B_k = [Ts^2/2 * I ; Ts * I ; 0 0];
     O_k = [0 0 0 0 yaw_med(k)]';
