@@ -17,7 +17,7 @@ bias_a = [th_acc(10) th_acc(11) th_acc(12)]';
 
 %% constantes
 g_w = 1; % magnitud aceleración de gravedad
-dt = 0.1; % tasa de muestreo
+Ts = 0.1; % tasa de muestreo
 N = length(am);
 T = dt*N;
 dt_gps = 5;
@@ -41,20 +41,11 @@ Sx_body = zeros(1,N);
 Sy_body = zeros(1,N);
 Sz_body = zeros(1,N);
 
-%% Matrices del filtro de Kalman
-F = [1 0 dt 0; 0 1 0 dt; 0 0 1 0; 0 0 0 1];  % Matriz Jacobiana (función)
-H = [1 0 0 0; 0 1 0 0];  % Matriz de observación
-Q = [0.09 0 0 0; 0 0.09 0 0; 0 0 0.09 0; 0 0 0 0.09]*10^-4;  % Matriz de covarianza del proceso
-R = [0.09 0; 0 0.09];  % Matriz de covarianza de la medición
-P = eye(4)*10^3;  % Matriz de covarianza inicial del error
-x_h = [0; 0; 0; 0];  % Estado inicial [posición_x; posición_y; velocidad_x; velocidad_y]
-
-% constantes.m
-x_h = [0 0 0 0 0]'; % x_h = [s1 s2 v1 v2 yaw] %  
+%% Matrices y vectores del filtro de Kalman extendido
+x_h = [0 0 0 0 0]'; % x_h = [s1 s2 v1 v2 yaw] inicializacion  
 I = eye(2);
 O = zeros(2,2);
-c = 1;
-Cs = c;
+Cs = c; % Condicion de parada
 eul = 0;
 aw_k = [1 1]';
 

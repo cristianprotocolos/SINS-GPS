@@ -63,30 +63,33 @@ end
 
 
 %% Modelo de predicion de velocidad y posicion
-
-for k=1:1
+inicio = 2;
+for k=inicio:N-1
     
     % condicion 1
     % condicion 2
     % condicion 3
    
+    
+    
+
     scaling_q = norm([q0(k) q1(k) q2(k) q3(k)]);
 
-    q0_med = q0(k)/scaling_q;
-    q1_med = q1(k)/scaling_q;
-    q2_med = q2(k)/scaling_q;
-    q3_med = q3(k)/scaling_q;
+    q0_k = q0(k)/scaling_q;
+    q1_k = q1(k)/scaling_q;
+    q2_k = q2(k)/scaling_q;
+    q3_k = q3(k)/scaling_q;
 
     % Angulos de Euler
     
-    pitch_med(k) = atan2( 2*(q0_med*q1_med + q2_med*q3_med), 1 - 2*(q1_med^2 + q2_med^2));
-    roll_med(k)  = asin(2*(q0_med*q2_med - q3_med*q1_med));
-    yaw_med(k)   = atan2( 2*(q0_med*q3_med + q1_med*q2_med), 1 - 2*(q2_med^2 + q3_med^2));
+    pitch(k) = atan2( 2*(q0_k*q1_k + q2_k*q3_k), 1 - 2*(q1_k^2 + q2_k^2));
+    roll(k)  = asin(2*(q0_k*q2_k - q3_k*q1_k));
+    yaw(k)   = atan2( 2*(q0_k*q3_k + q1_k*q2_k), 1 - 2*(q2_k^2 + q3_k^2));
 
     % Matriz de rotacion de Body a World
-    wR_b = [q0_med^2 + q1_med^2 - q2_med^2 - q3_med^2, 2*(q1_med*q2_med - q0_med*q3_med), 2*(q1_med*q3_med + q0_med*q2_med);
-            2*(q1_med*q2_med + q0_med*q3_med), q0_med^2 - q1_med^2 + q2_med^2 - q3_med^2, 2*(q2_med*q3_med - q0_med*q1_med);
-            2*(q1_med*q3_med - q0_med*q2_med), 2*(q2_med*q3_med + q0_med*q1_med), q0_med^2 - q1_med^2 - q2_med^2 + q3_med^2];
+    wR_b = [q0_k^2 + q1_k^2 - q2_k^2 - q3_k^2, 2*(q1_k*q2_k - q0_k*q3_k), 2*(q1_k*q3_k + q0_k*q2_k);
+            2*(q1_k*q2_k + q0_k*q3_k), q0_k^2 - q1_k^2 + q2_k^2 - q3_k^2, 2*(q2_k*q3_k - q0_k*q1_k);
+           2*(q1_k*q3_k - q0_k*q2_k), 2*(q2_k*q3_k + q0_k*q1_k), q0_k^2 - q1_k^2 - q2_k^2 + q3_k^2];
     
     acc_b = [a_x(k) a_y(k) a_z(k)]';
     acc_W = wR_b * acc_b;
@@ -96,16 +99,18 @@ for k=1:1
     acc_Wy(k) = acc_W(2)*g_w;
     acc_Wz(k) = acc_W(3)*g_w;    
 
-    % Modifica la orientacion de los ejes y elimina componente de gravedad del eje Zw
-    aw = [-acc_Wx(k); -acc_Wy(k); acc_Wz(k)]' - [ 0 0 g_w]'; %
-    aw_k = [-acc_Wx(k); -acc_Wy(k)];
+    aw_k = [-acc_Wx; -acc_Wy; acc_Wz]; %
+
+    % Elimina componente de gravedad del eje Zw
+    acc_Wz = acc_Wz - g_w;
+
+
     %% FILTRO DE KALMAN EXTENDIDO
     
-    % Prediccion
     A_k = [I I*Ts O ; O I*Cs O ; 0 0 0 0 0 0];
     A_k(:,end) = [];
     B_k = [Ts^2/2 * I ; Ts * I ; 0 0];
-    O_k = [0 0 0 0 yaw_med(k)]';
+    O_k = [0 0 0 0 eul]';
     
     x_pred = A_k * x_h + B_k * aw_k + O_k;
     
@@ -113,37 +118,8 @@ for k=1:1
     H(:,end) = [];
     
     z_pred = H * x_pred;
-
-    % Actualizacion
-
-    m_k = [x_gps , y_gps , yaw_gps]
 end
 
-
-%% calculo de angulos de mediciones GPS
-for i=3:length(coord_XY((1:end),1))
-    ref = [0, 1];  
-    if i==1
-        v1 = [0, 0];
-    else
-        v1 = [coord_XY(i-1,1), coord_XY(i-1,2)];
-    end
-    v2 = [coord_XY(i,1), coord_XY(i,2)]; 
-    v = v2 - v1;
-    % Calcular el producto punto entre el vector v y el eje x
-    dot_product = dot(v, ref);
-    % Calcular la magnitud de los vectores
-    magnitude_v = norm(v);
-    magnitude_x_axis = norm(ref);
-    % Calcular el ángulo usando la definición del producto punto
-    cos_theta = dot_product / (magnitude_v * magnitude_x_axis);
-    % Calcular el ángulo en radianes
-    theta_rad = acos(cos_theta);
-    % Convertir el ángulo a grados
-    theta_deg = rad2deg(theta_rad);
-    angleGPS(i) = theta_deg;
-    
-end
 
 
 %% FIGURAS
