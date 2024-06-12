@@ -5,7 +5,7 @@ close all
 dataIMU; % Lectura de DATA SD 
 constantes; % Lectura de constantes
 
-%% Calibracion de aceleraciones MPU9250
+%% Calibracion de aceleraciones body MPU9250
 for i=1:N
     a_b = S_a * k_a * (am(i,:)' - bias_a); %% Body Frame
     a_x(i) = a_b(1)*1;
@@ -18,25 +18,11 @@ end
 % a_x = am_BNO(:,1)*0.0010;
 % a_y = am_BNO(:,2)*0.0010;
 % a_z = am_BNO(:,3)*0.0010;
-%% rotacion de coordenadas de aceleracion
 
-
-
-
-%% TIEMPOS
-S_IMU = [Sx_k; Sy_k; Sz_k]';
-med_m = [Sx_k; Sy_k]';
-
+%% calculo distancia, desplazamiento y coordenadas gps en unidades (m)
 [dist_true, desp_true, coord_XY] = gps_med2m(gps_med_NZ);
-[dist_med, desp_med] = rec_desp(med_m);
 
-N_imu = length(desp_med);
-N_gps = length(desp_true);
-
-tiempo_imu = linspace(1, N/10, N_imu);
-tiempo_gps = linspace(1, N/10, N_gps);
-
-indices_no_cero = find(gps_med(:,1) ~= 0);
+indices_no_cero = find(gps_med_exp1(:,1) ~= 0);
 gps_med_m = [];
 j =  1;
 for i = 1:indices_no_cero(end)
@@ -55,50 +41,80 @@ for i = indices_no_cero(end)+1:N
     gps_med_m(i,2) = 0; % Guardar el valor si es distinto de cero
 end
 
-for k=1:N
-    a_norm(k) = sqrt(acc_Wx(k)^2 + acc_Wy(k)^2 + acc_Wz(k)^2); 
-    w_norm(k) = sqrt(w_x(k)^2 + w_y(k)^2 + w_z(k)^2);     
-end
-
-
+% for k=1:N
+%     a_norm(k) = sqrt(acc_Wx(k)^2 + acc_Wy(k)^2 + acc_Wz(k)^2); 
+%     w_norm(k) = sqrt(w_x(k)^2 + w_y(k)^2 + w_z(k)^2);     
+% end
 
 %% Modelo de predicion de velocidad y posicion
 
-for k=1:1
+for k=1:N
     
-    % condicion 1
-    % condicion 2
-    % condicion 3
-   
     scaling_q = norm([q0(k) q1(k) q2(k) q3(k)]);
 
     q0_med = q0(k)/scaling_q;
     q1_med = q1(k)/scaling_q;
     q2_med = q2(k)/scaling_q;
     q3_med = q3(k)/scaling_q;
+    
+    q_k = [q0_med q1_med q2_med q3_med];
 
     % Angulos de Euler
-    
     pitch_med(k) = atan2( 2*(q0_med*q1_med + q2_med*q3_med), 1 - 2*(q1_med^2 + q2_med^2));
     roll_med(k)  = asin(2*(q0_med*q2_med - q3_med*q1_med));
     yaw_med(k)   = atan2( 2*(q0_med*q3_med + q1_med*q2_med), 1 - 2*(q2_med^2 + q3_med^2));
 
     % Matriz de rotacion de Body a World
-    wR_b = [q0_med^2 + q1_med^2 - q2_med^2 - q3_med^2, 2*(q1_med*q2_med - q0_med*q3_med), 2*(q1_med*q3_med + q0_med*q2_med);
-            2*(q1_med*q2_med + q0_med*q3_med), q0_med^2 - q1_med^2 + q2_med^2 - q3_med^2, 2*(q2_med*q3_med - q0_med*q1_med);
-            2*(q1_med*q3_med - q0_med*q2_med), 2*(q2_med*q3_med + q0_med*q1_med), q0_med^2 - q1_med^2 - q2_med^2 + q3_med^2];
-    
     acc_b = [a_x(k) a_y(k) a_z(k)]';
-    acc_W = wR_b * acc_b;
-     
+
+    q_aceleracion = quaternion(q_k) * acc_b;    
+    q_conjugado = conj(quaternion(q_k));   
+    acc_W = parts(q_aceleracion * q_conjugado);
+   
     % Vectores de aceleraciones calibradas Frame WORLD
     acc_Wx(k) = acc_W(1)*g_w;
     acc_Wy(k) = acc_W(2)*g_w;
     acc_Wz(k) = acc_W(3)*g_w;    
 
     % Modifica la orientacion de los ejes y elimina componente de gravedad del eje Zw
-    aw = [-acc_Wx(k); -acc_Wy(k); acc_Wz(k)]' - [ 0 0 g_w]'; %
+    aw = [-acc_Wx(k); -acc_Wy(k); acc_Wz(k)]' - [ 0 0 g_w]; %
     aw_k = [-acc_Wx(k); -acc_Wy(k)];
+
+    %% CONDICIONES
+    a_norm(k) = sqrt(acc_Wx(k)^2 + acc_Wy(k)^2 + acc_Wz(k)^2); 
+    w_norm(k) = sqrt(w_x(k)^2 + w_y(k)^2 + w_z(k)^2); 
+    %% condicion 1: thrhd_amin = 1.1; thrhd_amax = 0.9;    
+    if ( thrhd_amin < a_norm(k) && thrhd_amax > a_norm(k) )
+        C_1(k) = 1;
+    else
+        C_1(k) = 0;
+    end
+    %% condicion 2: 
+    % Calcular la suma de los valores dentro de la ventana de promedio
+    lower_limit = max(k - s, 1);
+    upper_limit = min(k + s, numel(aw));
+    sum_within_window = sum(aw(lower_limit:upper_limit));
+    
+    % Calcular el promedio de los valores dentro de la ventana de promedio
+    mean_within_window = sum_within_window / window_size;
+    
+    % Calcular la diferencia entre a_k y el cuadrado del promedio dentro de la ventana de promedio
+    diff_square_mean = (aw(3) - mean_within_window)^2;
+    
+    % Calcular la varianza cuadrática media
+    sigma_sq(k) = diff_square_mean / window_size;
+    if ( w_norm(k) < thrhdS )
+        C_2(k) = 1;
+    else
+        C_2(k) = 0;
+    end
+
+    %% condicion 3: 
+     if ( w_norm(k) < thrhdwmax )
+        C_3(k) = 1;
+    else
+        C_3(k) = 0;
+     end
     %% FILTRO DE KALMAN EXTENDIDO
     
     % Prediccion
@@ -112,11 +128,11 @@ for k=1:1
     H = [I O O ; 0 0 0 0 1 0];
     H(:,end) = [];
     
-    z_pred = H * x_pred;
+%     z_pred = H * x_pred;
 
     % Actualizacion
 
-    m_k = [x_gps , y_gps , yaw_gps]
+    %m_k = [x_gps , y_gps , yaw_gps]
 end
 
 
@@ -255,6 +271,8 @@ hold on
 plot(c2_k, 'b')
 title('C1 y C2')
 
+figure(18)
+plot(angleGPS)
 
 N_c1 = nnz(c1_k)/N * 100
 N_c2 = nnz(c2_k)/N * 100

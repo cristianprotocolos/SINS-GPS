@@ -1,6 +1,6 @@
 % constantes.m
 
-% parametros de calibracion del aceler
+% parametros de calibracion del acelerometro 
 th_acc = [0.00348071285001877, -0.000785715436595477, -0.00304916604691251, ...
          -0.00166593786338318, 0.00132809919438384, 0.00167220420183682, ... 
          -6.09943696144438e-05, -6.06099273282422e-05, -5.97951315870594e-05, ... 
@@ -11,17 +11,15 @@ th_acc = [0.00348071285001877, -0.000785715436595477, -0.00304916604691251, ...
 %          0.00103606586064220, 0.0010356721689052, 0.00103210836111909, ... 
 %           8.31847270472375, -21.9462961335939, 20.5860087074609]; %% BNO055
 
-S_a = [ 1		    th_acc(1) th_acc(2);
-          th_acc(3)	1         th_acc(4);
-          th_acc(5)	th_acc(6)        1];
+S_a = [ 1 th_acc(1) th_acc(2); th_acc(3) 1 th_acc(4); th_acc(5)	th_acc(6) 1];
 k_a = diag([th_acc(7) th_acc(8) th_acc(9)]);
 bias_a = [th_acc(10) th_acc(11) th_acc(12)]';
 
 %% constantes
 g_w = 1; % magnitud aceleración de gravedad
-dt = 0.1; % tasa de muestreo
+Ts = 0.1; % tasa de muestreo
 N = length(am);
-T = dt*N;
+T = Ts*N;
 dt_gps = 5;
 correcOn = 1;
 
@@ -43,10 +41,12 @@ Sx_body = zeros(1,N);
 Sy_body = zeros(1,N);
 Sz_body = zeros(1,N);
 
-%% Matrices del filtro de Kalman
-F = [1 0 dt 0; 0 1 0 dt; 0 0 1 0; 0 0 0 1];  % Matriz Jacobiana (función)
-H = [1 0 0 0; 0 1 0 0];  % Matriz de observación
-Q = [0.09 0 0 0; 0 0.09 0 0; 0 0 0.09 0; 0 0 0 0.09]*10^-4;  % Matriz de covarianza del proceso
-R = [0.09 0; 0 0.09];  % Matriz de covarianza de la medición
-P = eye(4)*10^3;  % Matriz de covarianza inicial del error
-x_h = [0; 0; 0; 0];  % Estado inicial [posición_x; posición_y; velocidad_x; velocidad_y]
+%% Matrices y vectores del filtro de Kalman extendido
+x_h = [0 0 0 0 0]'; % x_h = [s1 s2 v1 v2 yaw] inicializacion  
+I = eye(2);
+O = zeros(2,2);
+Cs = 1; % Condicion de parada
+eul = 0;
+aw_k = [1 1]';
+
+%% Parametros condiones C1, C2 y 

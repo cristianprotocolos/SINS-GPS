@@ -19,7 +19,7 @@ bias_a = [th_acc(10) th_acc(11) th_acc(12)]';
 g_w = 1; % magnitud aceleración de gravedad
 Ts = 0.1; % tasa de muestreo
 N = length(am);
-T = dt*N;
+T = Ts*N;
 dt_gps = 5;
 correcOn = 1;
 
@@ -45,8 +45,18 @@ Sz_body = zeros(1,N);
 x_h = [0 0 0 0 0]'; % x_h = [s1 s2 v1 v2 yaw] inicializacion  
 I = eye(2);
 O = zeros(2,2);
-Cs = c; % Condicion de parada
+Cs = 1; % Condicion de parada
 eul = 0;
 aw_k = [1 1]';
 
+%% Parametros condiones C1, C2 y C3
+% C1
+thrhd_amin = 0.9;
+thrhd_amax = 1.1;
+% C2
+thrhdS = 0.1;
+s = 5; % ventana de promedio de tamaño 5
+window_size = 2*s + 1;
+% C3
+thrhdwmax = 0.1;
 
