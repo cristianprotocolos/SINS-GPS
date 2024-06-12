@@ -48,3 +48,14 @@ Q = [0.09 0 0 0; 0 0.09 0 0; 0 0 0.09 0; 0 0 0 0.09]*10^-4;  % Matriz de covaria
 R = [0.09 0; 0 0.09];  % Matriz de covarianza de la medición
 P = eye(4)*10^3;  % Matriz de covarianza inicial del error
 x_h = [0; 0; 0; 0];  % Estado inicial [posición_x; posición_y; velocidad_x; velocidad_y]
+
+% constantes.m
+x_h = [0 0 0 0 0]'; % x_h = [s1 s2 v1 v2 yaw] %  
+I = eye(2);
+O = zeros(2,2);
+c = 1;
+Cs = c;
+eul = 0;
+aw_k = [1 1]';
+
+
