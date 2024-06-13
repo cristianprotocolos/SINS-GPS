@@ -133,12 +133,12 @@ for k=1:N
     B_k = [Ts^2/2 * I ; Ts * I ; zeros(7,3)];
 
     S = [-q1_k -q2_k -q3_k ; q0_k -q3_k q2_k ; q3_k q0_k -q1_k ; -q2_k q1_k q0_k];
-    
+
     C_k = [zeros(6,13) ; zeros(4,6) eye(4,4) -Ts/2*S ; zeros(3,6) zeros(3,4) eye(3,3)];
     D_k = [zeros(6,3) ; Ts/1 * S ; zeros(3,3)];
 
     % Prediccion
-    x_pred = A_k * x_h + B_k * aw_k + C_k * x_h + D_k * W(k,:)'; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]
+    x_pred = A_k * x_h + B_k * aw_k + C_k * x_h + D_k * W(k,:)'; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]h
     
     H = [eye(2) zeros(2,7) ];   
     z_pred = H * x_pred;
