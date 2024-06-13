@@ -129,17 +129,22 @@ for k=1:N
     acc_b = [a_x(k) a_y(k) a_z(k)]';
     acc_W = wR_b * acc_b;
     %% FILTRO DE KALMAN EXTENDIDO
-    k
-    % Prediccion
     A_k = [I I*Ts O zeros(3,4); O I*Cs(k) O zeros(3,4); zeros(7,13)];
-
     B_k = [Ts^2/2 * I ; Ts * I ; zeros(7,3)];
+
     S = [-q1_k -q2_k -q3_k ; q0_k -q3_k q2_k ; q3_k q0_k -q1_k ; -q2_k q1_k q0_k];
-    C_k = [zeros(6,13) ; zeros(4,6) eye(4,4) - Ts/2*S  ; zeros(3,6) zeros(3,4) eye(3,3)];
+
+    C_k = [zeros(6,13) ; zeros(4,6) eye(4,4) -Ts/2*S ; zeros(3,6) zeros(3,4) eye(3,3)];
+    D_k = [zeros(6,3) ; Ts/1 * S ; zeros(3,3)];
+
+    % Prediccion
+    x_pred = A_k * x_h + B_k * aw_k + C_k * x_h + D_k * W(k,:)'; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]h
     
-    x_pred = A_k * x_h + B_k * aw_k + O_k; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]
-    
-    H = [eye(2) zeros(2,7) ];   
+    C_a = [-q2_k q3_k -q0_k q1_k ; q1_k q0_k q3_k q2_k ; q0_k -q1_k -q2_k q3_k];
+    C_m = [q3_k q2_k q1_k q0_k ; q0_k -q1_k  q2_k -q3_k ; -q1_k -q0_k q3_k q2_k];
+
+    H = [eye(2) zeros(2,11) ; zeros(3,6) C_a O ; zeros(3,6) C_m O]; % dim(8x13) 6x7
+ 
     z_pred = H * x_pred;
     
     % Actualizacion

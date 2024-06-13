@@ -140,7 +140,11 @@ for k=1:N
     % Prediccion
     x_pred = A_k * x_h + B_k * aw_k + C_k * x_h + D_k * W(k,:)'; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]h
     
-    H = [eye(2) zeros(2,7) ];   
+    C_a = [-q2_k q3_k -q0_k q1_k ; q1_k q0_k q3_k q2_k ; q0_k -q1_k -q2_k q3_k];
+    C_m = [q3_k q2_k q1_k q0_k ; q0_k -q1_k  q2_k -q3_k ; -q1_k -q0_k q3_k q2_k];
+
+    H = [eye(2) zeros(2,11) ; zeros(3,6) C_a O ; zeros(3,6) C_m O]; % dim(8x13) 6x7
+ 
     z_pred = H * x_pred;
     
     % Actualizacion
