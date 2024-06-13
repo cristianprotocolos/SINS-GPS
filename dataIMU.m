@@ -22,6 +22,7 @@ w_x = w_body(:,1) * Scaling_g;
 w_y = w_body(:,2) * Scaling_g;
 w_z = w_body(:,3) * Scaling_g;
 
+W = [w_x w_y w_z];
 %% Aceleraciones lineales mpu 14 a 16
 am = data_imu(:,14:16); %% aceleraciones mpu
 %am = data_imu(seleccionados, 1: 3); %% aceleraciones bno

@@ -104,6 +104,7 @@ for k=1:N
     diff_square_mean = (aw_k(3) - mean_within_window)^2;
     
     % Calcular la varianza cuadrática media
+    
     sigma_sq(k) = diff_square_mean / window_size;
     if ( w_norm(k) < thrhdS )
         C_2(k) = 1;
@@ -118,7 +119,7 @@ for k=1:N
         C_3(k) = 0;
      end
 
-     Cs(k) = C_1(k) * C_2(k) * C_3(k);
+     Cs(k) = C_1(k) * C_2(k) * C_3(k)
 
     % rotacion de coordenadas de aceleracion 
     wR_b = [q0_k^2 + q1_k^2 - q2_k^2 - q3_k^2, 2*(q1_k*q2_k - q0_k*q3_k), 2*(q1_k*q3_k + q0_k*q2_k);
@@ -128,15 +129,16 @@ for k=1:N
     acc_b = [a_x(k) a_y(k) a_z(k)]';
     acc_W = wR_b * acc_b;
     %% FILTRO DE KALMAN EXTENDIDO
+    A_k = [I I*Ts O zeros(3,4); O I*Cs(k) O zeros(3,4); zeros(7,13)];
+    B_k = [Ts^2/2 * I ; Ts * I ; zeros(7,3)];
+
+    S = [-q1_k -q2_k -q3_k ; q0_k -q3_k q2_k ; q3_k q0_k -q1_k ; -q2_k q1_k q0_k];
     
+    C_k = [zeros(6,13) ; zeros(4,6) eye(4,4) -Ts/2*S ; zeros(3,6) zeros(3,4) eye(3,3)];
+    D_k = [zeros(6,3) ; Ts/1 * S ; zeros(3,3)];
+
     % Prediccion
-    A_k = [I I*Ts O ; O I*Cs(k) O ; O O O];
-
-    B_k = [Ts^2/2 * I ; Ts * I ; O];
-
-    O_k = [0 0 0 0 0 0 pitch_med(k) roll_med(k) yaw_med(k)]';
-    
-    x_pred = A_k * x_h + B_k * aw_k + O_k; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]
+    x_pred = A_k * x_h + B_k * aw_k + C_k * x_h + D_k * W(k,:)'; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]
     
     H = [eye(2) zeros(2,7) ];   
     z_pred = H * x_pred;
@@ -176,7 +178,7 @@ for i=3:length(coord_XY((1:end),1))
     
 end
 
-polos = eig(A - LC)
+% polos = eig(A - LC)
 
 %% FIGURAS
 onFig = 0;
