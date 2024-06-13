@@ -1,7 +1,9 @@
+%% Script estimacion de posicion
 clear
 clc
 close all
 
+%% Lectura de datos y valores constante
 dataIMU; % Lectura de DATA SD 
 constantes; % Lectura de constantes
 
@@ -52,17 +54,17 @@ for k=1:N
     
     scaling_q = norm([q0(k) q1(k) q2(k) q3(k)]);
 
-    q0_med = q0(k)/scaling_q;
-    q1_med = q1(k)/scaling_q;
-    q2_med = q2(k)/scaling_q;
-    q3_med = q3(k)/scaling_q;
+    q0_k = q0(k)/scaling_q;
+    q1_k = q1(k)/scaling_q;
+    q2_k = q2(k)/scaling_q;
+    q3_k = q3(k)/scaling_q;
     
-    q_k = [q0_med q1_med q2_med q3_med];
+    q_k = [q0_k q1_k q2_k q3_k];
 
     % Angulos de Euler
-    pitch_med(k) = atan2( 2*(q0_med*q1_med + q2_med*q3_med), 1 - 2*(q1_med^2 + q2_med^2));
-    roll_med(k)  = asin(2*(q0_med*q2_med - q3_med*q1_med));
-    yaw_med(k)   = atan2( 2*(q0_med*q3_med + q1_med*q2_med), 1 - 2*(q2_med^2 + q3_med^2));
+    pitch_med(k) = atan2( 2*(q0_k*q1_k + q2_k*q3_k), 1 - 2*(q1_k^2 + q2_k^2));
+    roll_med(k)  = asin(2*(q0_k*q2_k - q3_k*q1_k));
+    yaw_med(k)   = atan2( 2*(q0_k*q3_k + q1_k*q2_k), 1 - 2*(q2_k^2 + q3_k^2));
 
     % Matriz de rotacion de Body a World
     acc_b = [a_x(k) a_y(k) a_z(k)]';
@@ -77,8 +79,8 @@ for k=1:N
     acc_Wz(k) = acc_W(3)*g_w;    
 
     % Modifica la orientacion de los ejes y elimina componente de gravedad del eje Zw
-    aw = [-acc_Wx(k); -acc_Wy(k); acc_Wz(k)]' - [ 0 0 g_w]; %
-    aw_k = [-acc_Wx(k); -acc_Wy(k)];
+    aw_k = ([-acc_Wx(k); -acc_Wy(k); acc_Wz(k)]' + [ 0 0 g_w])'; %
+%     aw_k = [-acc_Wx(k); -acc_Wy(k); acc_Wz(k)];
 
     %% CONDICIONES
     a_norm(k) = sqrt(acc_Wx(k)^2 + acc_Wy(k)^2 + acc_Wz(k)^2); 
@@ -92,14 +94,14 @@ for k=1:N
     %% condicion 2: 
     % Calcular la suma de los valores dentro de la ventana de promedio
     lower_limit = max(k - s, 1);
-    upper_limit = min(k + s, numel(aw));
-    sum_within_window = sum(aw(lower_limit:upper_limit));
+    upper_limit = min(k + s, numel(aw_k));
+    sum_within_window = sum(aw_k(lower_limit:upper_limit));
     
     % Calcular el promedio de los valores dentro de la ventana de promedio
     mean_within_window = sum_within_window / window_size;
     
     % Calcular la diferencia entre a_k y el cuadrado del promedio dentro de la ventana de promedio
-    diff_square_mean = (aw(3) - mean_within_window)^2;
+    diff_square_mean = (aw_k(3) - mean_within_window)^2;
     
     % Calcular la varianza cuadrática media
     sigma_sq(k) = diff_square_mean / window_size;
@@ -117,27 +119,38 @@ for k=1:N
      end
 
      Cs(k) = C_1(k) * C_2(k) * C_3(k);
+
+    % rotacion de coordenadas de aceleracion 
+    wR_b = [q0_k^2 + q1_k^2 - q2_k^2 - q3_k^2, 2*(q1_k*q2_k - q0_k*q3_k), 2*(q1_k*q3_k + q0_k*q2_k);
+            2*(q1_k*q2_k + q0_k*q3_k), q0_k^2 - q1_k^2 + q2_k^2 - q3_k^2, 2*(q2_k*q3_k - q0_k*q1_k);
+           2*(q1_k*q3_k - q0_k*q2_k), 2*(q2_k*q3_k + q0_k*q1_k), q0_k^2 - q1_k^2 - q2_k^2 + q3_k^2];
+    
+    acc_b = [a_x(k) a_y(k) a_z(k)]';
+    acc_W = wR_b * acc_b;
     %% FILTRO DE KALMAN EXTENDIDO
     
     % Prediccion
-    A_k = [I I*Ts O ; O I*Cs(k) O ; 0 0 0 0 0 0];
-    A_k(:,end) = [];
-    B_k = [Ts^2/2 * I ; Ts * I ; 0 0];
-    O_k = [0 0 0 0 yaw_med(k)]';
-    
-    x_pred = A_k * x_h + B_k * aw_k + O_k;
-    
-    H = [I O O ; 0 0 0 0 1 0];
-    H(:,end) = [];
-    
-%     z_pred = H * x_pred;
+    A_k = [I I*Ts O ; O I*Cs(k) O ; O O O];
 
+    B_k = [Ts^2/2 * I ; Ts * I ; O];
+
+    O_k = [0 0 0 0 0 0 pitch_med(k) roll_med(k) yaw_med(k)]';
+    
+    x_pred = A_k * x_h + B_k * aw_k + O_k; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]
+    
+    H = [eye(2) zeros(2,7) ];   
+    z_pred = H * x_pred;
+    
     % Actualizacion
-
+    x_h = x_pred;
     %m_k = [x_gps , y_gps , yaw_gps]
+    s1(k) = x_pred(1);
+    s2(k) = x_pred(2);
+    yaw_h(k) = x_pred(5);
+
 end
 
-
+plot(s1,s2)
 %% calculo de angulos de mediciones GPS
 for i=3:length(coord_XY((1:end),1))
     ref = [0, 1];  
@@ -163,6 +176,7 @@ for i=3:length(coord_XY((1:end),1))
     
 end
 
+polos = eig(A - LC)
 
 %% FIGURAS
 onFig = 0;
