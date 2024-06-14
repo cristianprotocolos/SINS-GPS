@@ -7,8 +7,14 @@ close all
 dataIMU; % Lectura de DATA SD 
 constantes; % Lectura de constantes
 
-%% Calibracion de aceleraciones body MPU9250
+%% Calibracion de Aceleraciones y Magnetometro body MPU9250
 for i=1:N
+    a_b = S_a * k_a * (am(i,:)' - bias_a); %% Body Frame
+    a_x(i) = a_b(1)*1;
+    a_y(i) = a_b(2)*1;
+    a_z(i) = a_b(3)*1;
+    norm_acc(i) = norm(a_b);
+
     a_b = S_a * k_a * (am(i,:)' - bias_a); %% Body Frame
     a_x(i) = a_b(1)*1;
     a_y(i) = a_b(2)*1;
@@ -52,39 +58,8 @@ end
 
 for k=1:N
     
-    scaling_q = norm([q0(k) q1(k) q2(k) q3(k)]);
-
-    q0_k = q0(k)/scaling_q;
-    q1_k = q1(k)/scaling_q;
-    q2_k = q2(k)/scaling_q;
-    q3_k = q3(k)/scaling_q;
-    
-    q_k = [q0_k q1_k q2_k q3_k];
-
-    % Angulos de Euler
-    pitch_med(k) = atan2( 2*(q0_k*q1_k + q2_k*q3_k), 1 - 2*(q1_k^2 + q2_k^2));
-    roll_med(k)  = asin(2*(q0_k*q2_k - q3_k*q1_k));
-    yaw_med(k)   = atan2( 2*(q0_k*q3_k + q1_k*q2_k), 1 - 2*(q2_k^2 + q3_k^2));
-
-    % Matriz de rotacion de Body a World
-    acc_b = [a_x(k) a_y(k) a_z(k)]';
-
-    q_aceleracion = quaternion(q_k) * acc_b;    
-    q_conjugado = conj(quaternion(q_k));   
-    acc_W = parts(q_aceleracion * q_conjugado);
-   
-    % Vectores de aceleraciones calibradas Frame WORLD
-    acc_Wx(k) = acc_W(1)*g_w;
-    acc_Wy(k) = acc_W(2)*g_w;
-    acc_Wz(k) = acc_W(3)*g_w;    
-
-    % Modifica la orientacion de los ejes y elimina componente de gravedad del eje Zw
-    aw_k = ([-acc_Wx(k); -acc_Wy(k); acc_Wz(k)]' + [ 0 0 g_w])'; %
-%     aw_k = [-acc_Wx(k); -acc_Wy(k); acc_Wz(k)];
-
     %% CONDICIONES
-    a_norm(k) = sqrt(acc_Wx(k)^2 + acc_Wy(k)^2 + acc_Wz(k)^2); 
-    w_norm(k) = sqrt(w_x(k)^2 + w_y(k)^2 + w_z(k)^2); 
+    
     %% condicion 1: thrhd_amin = 1.1; thrhd_amax = 0.9;    
     if ( thrhd_amin < a_norm(k) && thrhd_amax > a_norm(k) )
         C_1(k) = 1;
@@ -115,22 +90,56 @@ for k=1:N
     %% condicion 3: 
      if ( w_norm(k) < thrhdwmax )
         C_3(k) = 1;
-    else
+     else
         C_3(k) = 0;
      end
 
-     Cs(k) = C_1(k) * C_2(k) * C_3(k);
-    
-    %% aplicar a tiempo k
+    Cs(k) = C_1(k) * C_2(k) * C_3(k);
+
+    %% Fin de condiciones
+
+    s1(k) = x_h(1);
+    s2(k) = x_h(2);
+
+    q0_k(k) = x_h(7);
+    q1_k(k) = x_h(8);
+    q2_k(k) = x_h(9);
+    q3_k(k) = x_h(10);
+
+    bias_x = x_h(11);
+    bias_y = x_h(12);
+    bias_z = x_h(13);
+
+    % Coreccion de Bias giroscopio
+    w_x = (w_body(:,1) + bias_x)* Scaling_g;
+    w_y = (w_body(:,2) + bias_y)* Scaling_g;
+    w_z = (w_body(:,3) + bias_z)* Scaling_g;
+
     % rotacion de coordenadas de aceleracion 
     wR_b = [q0_k^2 + q1_k^2 - q2_k^2 - q3_k^2, 2*(q1_k*q2_k - q0_k*q3_k), 2*(q1_k*q3_k + q0_k*q2_k);
             2*(q1_k*q2_k + q0_k*q3_k), q0_k^2 - q1_k^2 + q2_k^2 - q3_k^2, 2*(q2_k*q3_k - q0_k*q1_k);
            2*(q1_k*q3_k - q0_k*q2_k), 2*(q2_k*q3_k + q0_k*q1_k), q0_k^2 - q1_k^2 - q2_k^2 + q3_k^2];
     
-    
+    % Angulos de Euler
+    pitch_med(k) = atan2( 2*(q0_k*q1_k + q2_k*q3_k), 1 - 2*(q1_k^2 + q2_k^2));
+    roll_med(k)  = asin(2*(q0_k*q2_k - q3_k*q1_k));
+    yaw_med(k)   = atan2( 2*(q0_k*q3_k + q1_k*q2_k), 1 - 2*(q2_k^2 + q3_k^2));
+
+    % Vectores de aceleraciones calibradas Frame WORLD
+    acc_Wx(k) = acc_W(1)*g_w;
+    acc_Wy(k) = acc_W(2)*g_w;
+    acc_Wz(k) = acc_W(3)*g_w;    
+
+    % Modifica la orientacion de los ejes y elimina componente de gravedad del eje Zw
     acc_b = [a_x(k) a_y(k) a_z(k)]';
     acc_W = wR_b * acc_b;
-    %% FILTRO DE KALMAN EXTENDIDO
+    aw_k = ([acc_Wx(k); acc_Wy(k); acc_Wz(k)]' + [ 0 0 g_w])'; %
+
+    a_norm(k) = sqrt(acc_Wx(k)^2 + acc_Wy(k)^2 + acc_Wz(k)^2); 
+    w_norm(k) = sqrt(w_x(k)^2 + w_y(k)^2 + w_z(k)^2); 
+    
+
+    %% INICIO FILTRO DE KALMAN EXTENDIDO
     A_k = [I I*Ts O zeros(3,4); O I*Cs(k) O zeros(3,4); zeros(7,13)];
     B_k = [Ts^2/2 * I O ; Ts * I O];
 
@@ -141,7 +150,7 @@ for k=1:N
 
     PHI = (A_k + C_k);
 
-    % Prediccion
+    % Prediccion EKF
     x_pred = PHI * x_h + ([B_k ; D_k]) * [aw_k ; W(k,:)']; % x_h = [x1 x2 x3 , v1 v2 v3 , pitch roll yaw]h
     
     C_a = [-q2_k q3_k -q0_k q1_k ; q1_k q0_k q3_k q2_k ; q0_k -q1_k -q2_k q3_k];
@@ -152,22 +161,15 @@ for k=1:N
     H = [eye(2) zeros(2,11) ; zeros(3,6) C_a O ; zeros(3,6) C_m O]; % dim(8x13) 6x7
     z_pred = H * x_pred;
 
-    % Actualizacion
+    % Actualizacion EKF
+    m_k = [acc_b ]
     K_k = P_pred * H' * inv(H * P_pred * H' + R_k);
     x_h = x_pred + k * (m_k - z_pred);
     P_h = ( eye(13,13) - K_k * H ) * P_pred;
 
-    s1(k) = x_h(1);
-    s2(k) = x_h(2);
+    %% fin del EKF
 
-    q0_k = x_h(7);
-    q1_k = x_h(8);
-    q2_k = x_h(9);
-    q3_k = x_h(10);
-
-    bias_x = x_h(11);
-    bias_y = x_h(12);
-    bias_z = x_h(13);
+    
 
 end
 

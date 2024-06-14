@@ -48,7 +48,7 @@ Sy_body = zeros(1,N);
 Sz_body = zeros(1,N);
 
 %% Matrices y vectores del filtro de Kalman extendido
-x_h = zeros(13,1); % x_h = [s1 s2 v1 v2 yaw] inicializacion  
+x_h = [0 0 0 , 0 0 0 , 1 0 0 0 , 0 0 0]; % x_h = [s1 s2 s3 v1 v2 v3 q0 q1 q2 q3 bias(x,y,z)] inicializacion  
 I = eye(3);
 O = zeros(3,3);
 Cs = 1; % Condicion de parada
