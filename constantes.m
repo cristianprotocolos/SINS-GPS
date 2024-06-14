@@ -16,10 +16,16 @@ k_a = diag([th_acc(7) th_acc(8) th_acc(9)]);
 bias_a = [th_acc(10) th_acc(11) th_acc(12)]';
 
 %% parametros de calibracion del magnetometro 
-th_mag = []; %% MPU9250
-S_mag = [ 1 th_mag(1) th_mag(2); th_mag(3) 1 th_mag(4); th_mag(5)	th_mag(6) 1];
-k_mag = diag([th_mag(7) th_mag(8) th_mag(9)]);
-bias_mag = [th_mag(10) th_mag(11) th_mag(12)]';
+
+% k_mag = 110;
+% figure(1)
+% subplot(3,1,1), plot( (bm(:,1) +  45) / k_mag)
+% subplot(3,1,2), plot( (bm(:,2) - 141) / k_mag)
+% subplot(3,1,3), plot( (bm(:,3) + 300) / k_mag)
+
+th_mag = [1/110 1/110 1/110 -45 +141 -300]; %% MPU9250
+k_mag = diag([th_mag(1) th_mag(2) th_mag(3)]);
+bias_mag = [th_mag(4) th_mag(5) th_mag(6)]';
 
 %% constantes
 g_w = 1; % magnitud aceleración de gravedad

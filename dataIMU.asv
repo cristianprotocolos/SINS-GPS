@@ -28,3 +28,6 @@ am = data_imu(:,14:16); %% aceleraciones mpu
 %am = data_imu(seleccionados, 1: 3); %% aceleraciones bno
 bm = data_imu(:,20:22); %% Magnetometro  mpu 17 a 19
 
+subplot(3,1,1), plot(bm(:,1)+45)
+subplot(3,1,2), plot(bm(:,2)+90)
+subplot(3,1,3), plot(bm(:,3))

@@ -17,7 +17,7 @@ for i=1:N
     norm_acc(i) = norm(a_b);
 
     % Magnetometro
-    mag_b = S_mag * k_mag * (am(i,:)' - bias_mag); %% Body Frame
+    mag_b = k_mag * (bm(i,:)' - bias_mag); %% Body Frame
     mag_x(i) = mag_b(1);
     mag_y(i) = mag_b(2);
     mag_z(i) = mag_b(3);
