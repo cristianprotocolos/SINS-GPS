@@ -26,3 +26,4 @@ W = [w_x w_y w_z];
 %% Aceleraciones lineales mpu 14 a 16
 am = data_imu(:,14:16); %% aceleraciones mpu
 %am = data_imu(seleccionados, 1: 3); %% aceleraciones bno
+bm = data_imu(:,17:19); %% Magnetometro  mpu 17 a 19

@@ -1,6 +1,6 @@
 % constantes.m
 
-%% parametros de calibracion del acelerometro 
+% parametros de calibracion del acelerometro 
 th_acc = [0.00348071285001877, -0.000785715436595477, -0.00304916604691251, ...
          -0.00166593786338318, 0.00132809919438384, 0.00167220420183682, ... 
          -6.09943696144438e-05, -6.06099273282422e-05, -5.97951315870594e-05, ... 
@@ -14,12 +14,6 @@ th_acc = [0.00348071285001877, -0.000785715436595477, -0.00304916604691251, ...
 S_a = [ 1 th_acc(1) th_acc(2); th_acc(3) 1 th_acc(4); th_acc(5)	th_acc(6) 1];
 k_a = diag([th_acc(7) th_acc(8) th_acc(9)]);
 bias_a = [th_acc(10) th_acc(11) th_acc(12)]';
-
-%% parametros de calibracion del magnetometro 
-th_mag = []; %% MPU9250
-S_mag = [ 1 th_mag(1) th_mag(2); th_mag(3) 1 th_mag(4); th_mag(5)	th_mag(6) 1];
-k_mag = diag([th_mag(7) th_mag(8) th_mag(9)]);
-bias_mag = [th_mag(10) th_mag(11) th_mag(12)]';
 
 %% constantes
 g_w = 1; % magnitud aceleración de gravedad
@@ -54,9 +48,8 @@ O = zeros(3,3);
 Cs = 1; % Condicion de parada
 eul = 0;
 aw_k = [1 1]';
-P_h = eye(13,13)*1e3
-Q_k = eye(13,13)*1e-3;
-R_k = eye(8,8)*1e-3;
+Q_k = eye(13,13)*1e-3
+R_k = eye()
 
 %% Parametros condiones C1, C2 y C3
 % C1
