@@ -162,15 +162,11 @@ for k=1:N
     z_pred = H * x_pred;
 
     % Actualizacion EKF
-    m_k = [acc_b ]
+    m_k = [x_gps y_gps acc_b mag_b]; % x_gps , y_gps, acc(x,y,z), mag(x,y,z)
     K_k = P_pred * H' * inv(H * P_pred * H' + R_k);
     x_h = x_pred + k * (m_k - z_pred);
     P_h = ( eye(13,13) - K_k * H ) * P_pred;
-
     %% fin del EKF
-
-    
-
 end
 
 plot(s1,s2)

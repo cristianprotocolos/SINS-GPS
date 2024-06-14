@@ -1,4 +1,4 @@
-% lecturas dataIMU.m
+% dataIMU.m
 dir = pwd;
 data_imu = readmatrix([dir, '\datos\1_exp.csv']);
 gps_med_exp1 = readmatrix([dir, '\datos\gps_med_exp1.csv']);
