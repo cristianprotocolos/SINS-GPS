@@ -119,12 +119,14 @@ for k=1:N
         C_3(k) = 0;
      end
 
-     Cs(k) = C_1(k) * C_2(k) * C_3(k)
-
+     Cs(k) = C_1(k) * C_2(k) * C_3(k);
+    
+    %% aplicar a tiempo k
     % rotacion de coordenadas de aceleracion 
     wR_b = [q0_k^2 + q1_k^2 - q2_k^2 - q3_k^2, 2*(q1_k*q2_k - q0_k*q3_k), 2*(q1_k*q3_k + q0_k*q2_k);
             2*(q1_k*q2_k + q0_k*q3_k), q0_k^2 - q1_k^2 + q2_k^2 - q3_k^2, 2*(q2_k*q3_k - q0_k*q1_k);
            2*(q1_k*q3_k - q0_k*q2_k), 2*(q2_k*q3_k + q0_k*q1_k), q0_k^2 - q1_k^2 - q2_k^2 + q3_k^2];
+    
     
     acc_b = [a_x(k) a_y(k) a_z(k)]';
     acc_W = wR_b * acc_b;
@@ -148,11 +150,20 @@ for k=1:N
     z_pred = H * x_pred;
     
     % Actualizacion
-    x_h = x_pred;
-    %m_k = [x_gps , y_gps , yaw_gps]
+    x_h = x_pred + k * (m_k - z_pred);
+]
     s1(k) = x_pred(1);
     s2(k) = x_pred(2);
     yaw_h(k) = x_pred(5);
+
+    q0_k = x_h(7);
+    q1_k = x_h(8);
+    q2_k = x_h(9);
+    q3_k = x_h(10);
+
+    bias_x = x_h(11);
+    bias_y = x_h(12);
+    bias_z = x_h(13);
 
 end
 
