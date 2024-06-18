@@ -8,9 +8,9 @@ log_NZ = nonzeros(gps_med_exp1(:,2));
 
 for i=1:length(gps_med_exp1(:,1))
     if (gps_med_exp1(i,1) ~= 0)
-        gps_disp(i) = 1;
+        gps(i) = 1;
     else
-        gps_disp(i) = 0;
+        indices(i) = 0;
     end
 end
 

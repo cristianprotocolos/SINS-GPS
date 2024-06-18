@@ -61,11 +61,12 @@ Cs = 1; % Condicion de parada
 eul = 0;
 delta_k = eye(8); % tamaño definido por la cantidad de mediciones posibles: x_gps, y_gps, acc(3) y b(3), total 9
 gps_available = 1;
-v_available = [1 1 1 1 1 1 gps_available gps_available]';
+v_available = [gps_available gps_available 1 1 1 1 1 1]';
 imu_std = 1;
 aw_k = [0 0 0]';
 P_h = eye(13,13)*1e3
-Q_k = eye(13,13)*1e-3;
+
+Q_k = eye(13,13)*1e-4;
 R_k = eye(8,8)*1e-3;
 
 %% Parametros condiones C1, C2 y C3
