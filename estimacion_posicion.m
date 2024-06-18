@@ -139,7 +139,7 @@ for k=1:N
     a_norm(k) = sqrt(acc_Wx(k)^2 + acc_Wy(k)^2 + acc_Wz(k)^2); 
     w_norm(k) = sqrt(w_x(k)^2 + w_y(k)^2 + w_z(k)^2); 
     
-    %% INICIO FILTRO DE KALMAN EXTENDIDO
+    %% INICIO MULTI-RATE EXTENDED FILTER KALMAN (MR-EFK)
     A_k = [I I*Ts O zeros(3,4); O I*Cs(k) O zeros(3,4); zeros(7,13)];
     B_k = [Ts^2/2 * I O ; Ts * I O];
 
