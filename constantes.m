@@ -66,7 +66,7 @@ imu_std = 1;
 aw_k = [0 0 0]';
 P_h = eye(13,13)*1e3
 
-Q_k = eye(13,13)*1e-4;
+Q_k = eye(13,13)*1e-5;
 R_k = eye(8,8)*1e-3;
 
 %% Parametros condiones C1, C2 y C3

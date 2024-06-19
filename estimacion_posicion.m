@@ -57,10 +57,10 @@ for k=1:N
     s1(k) = x_h(1);
     s2(k) = x_h(2);
 
-    q0_v(k) = x_h(7);
-    q1_v(k) = x_h(8);
-    q2_v(k) = x_h(9);
-    q3_v(k) = x_h(10);
+    q0_v(k) = x_h(8);
+    q1_v(k) = x_h(7);
+    q2_v(k) = x_h(10);
+    q3_v(k) = x_h(9);
 
     q0_k = x_h(7);
     q1_k = x_h(8);
@@ -76,7 +76,7 @@ for k=1:N
     w_y = (w_body(:,2) + bias_y)* Scaling_g;
     w_z = (w_body(:,3) + bias_z)* Scaling_g;
 
-    % rotacion de coordenadas de aceleracion 
+    % Matriz de rotacion b --> W 
     wR_b = [q0_k^2 + q1_k^2 - q2_k^2 - q3_k^2, 2*(q1_k*q2_k - q0_k*q3_k), 2*(q1_k*q3_k + q0_k*q2_k);
             2*(q1_k*q2_k + q0_k*q3_k), q0_k^2 - q1_k^2 + q2_k^2 - q3_k^2, 2*(q2_k*q3_k - q0_k*q1_k);
            2*(q1_k*q3_k - q0_k*q2_k), 2*(q2_k*q3_k + q0_k*q1_k), q0_k^2 - q1_k^2 - q2_k^2 + q3_k^2];
@@ -86,7 +86,7 @@ for k=1:N
     roll_med(k)  = asin(2*(q0_k*q2_k - q3_k*q1_k));
     yaw_med(k)   = atan2( 2*(q0_k*q3_k + q1_k*q2_k), 1 - 2*(q2_k^2 + q3_k^2));
 
-    % Modifica la orientacion de los ejes y elimina componente de gravedad del eje Zw
+    % Rotacion de coordenadas de aceleracion
     acc_b = [a_bx(k) a_by(k) a_bz(k)]';
     acc_W = wR_b * acc_b;
     
@@ -142,7 +142,7 @@ for k=1:N
     %% INICIO MULTI-RATE EXTENDED FILTER KALMAN (MR-EFK)
 
     % comprueba si hay una medicion de gps disponible
-    if (gps_disp(300) ~= 0)
+    if (gps_disp(k) ~= 0)
         gps_std = 1;
     else
         gps_std = 0;
@@ -186,13 +186,27 @@ for k=1:N
 end
 
 figure(1)
-plot(s1,s2)
+plot(s1,s2, "b")
+hold on
+plot(coord_XY(:,1), coord_XY(:,2), "black") 
+title("Posición MR-EKF")
+legend("MPU9250" , "GPS")
+hold off
 
 figure(2)
 subplot(4,1,1), plot(q0_v)
 subplot(4,1,2), plot(q1_v)
 subplot(4,1,3), plot(q2_v)
 subplot(4,1,4), plot(q3_v)
+title("Cuaterniones MR-EKF")
+
+figure(3)
+subplot(4,1,1), plot(qc_bno(:,1))
+subplot(4,1,2), plot(qc_bno(:,2))
+subplot(4,1,3), plot(qc_bno(:,3))
+subplot(4,1,4), plot(qc_bno(:,4))
+title("Cuaterniones BNO055")
+
 %% calculo de angulos de mediciones GPS
 for i=3:length(coord_XY((1:end),1))
     ref = [0, 1];  
