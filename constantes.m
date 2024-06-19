@@ -78,3 +78,7 @@ s = 5; % ventana de promedio de tamaño 5
 window_size = 2*s + 1;
 % C3
 thrhdwmax = 0.1;
+
+k_gps = 1;
+
+cont_gps = 0;
