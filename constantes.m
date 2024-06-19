@@ -60,11 +60,10 @@ O = zeros(3,3);
 Cs = 1; % Condicion de parada
 eul = 0;
 delta_k = eye(8); % tamaño definido por la cantidad de mediciones posibles: x_gps, y_gps, acc(3) y b(3), total 9
-gps_available = 1;
-v_available = [gps_available gps_available 1 1 1 1 1 1]';
+gps_std = 1;
 imu_std = 1;
 aw_k = [0 0 0]';
-P_h = eye(13,13)*1e3
+P_h = eye(13,13)*1e3;
 
 Q_k = eye(13,13)*1e-5;
 R_k = eye(8,8)*1e-3;
@@ -79,4 +78,3 @@ s = 5; % ventana de promedio de tamaño 5
 window_size = 2*s + 1;
 % C3
 thrhdwmax = 0.1;
-
