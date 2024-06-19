@@ -1,0 +1,5 @@
+unix = 1717763055, lat = -38.834362, lon = -72.698997, alt = 62.500000, bat% = 14, batmV = 3002, regCount = 0
+unix = 1717763149, lat = -38.834400, lon = -72.699005, alt = 71.000000, bat% = 13, batmV = 2993, regCount = 703
+unix = 1717763269, lat = -38.834461, lon = -72.698898, alt = 82.599998, bat% = 13, batmV = 2985, regCount = 1606
+unix = 1717763389, lat = -38.834320, lon = -72.698952, alt = 59.799999, bat% = 13, batmV = 2985, regCount = 2409
+unix = 1717763509, lat = -38.834461, lon = -72.699043, alt = 88.000000, bat% = 13, batmV = 2993, regCount = 3327

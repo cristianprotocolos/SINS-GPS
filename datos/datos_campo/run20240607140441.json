@@ -1,0 +1,9 @@
+{
+  "sensorOrder": "N,MPU9250_AX,AY,AZ,GX,GY,GZ,MX,MY,MZ,T,BNO055_AX,AY,AZ,GX,GY,GZ,MX,MY,MZ,Q0,Q1,Q2,Q3,T",
+  "samplingRate": 10,
+  "macAddr": 268362346103796,
+  "macAddrStr": null,
+  "appMode": 0,
+  "appSendPeriodS": 120,
+  "maxSamplesPerFile": 803
+}
