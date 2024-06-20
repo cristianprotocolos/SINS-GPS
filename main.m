@@ -137,10 +137,10 @@ for k=1:N
         k_gps = k_gps + 1; % gps ON
     end
 
-    if (gps_disp(k) ~= 0 && mod(k_gps, 20) == 0)
+    if (gps_disp(k) ~= 0 && mod(k_gps, 30) == 0)
         gps_std = 1; % gps ON
 
-        cont_gps = cont_gps + 1
+        cont_gps = cont_gps + 1;
         tiempo_correcion_gps(cont_gps) = k_cont(k-1);
 
     else
