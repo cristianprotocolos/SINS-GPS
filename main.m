@@ -25,15 +25,16 @@ for i=1:N
 end
 
 %% calculo distancia, desplazamiento y coordenadas gps en unidades (m)
-[dist_true, desp_true, coord_XY] = gps_med2m(gps_med_NZ);
+[dist_med, desp_med, coord_XY_med] = gps_med2m(gps_med_NZ);
+[dist_true, desp_true, coord_XY_true] = gps_med2m(true_gps_exp1);
 
 indices_no_cero = find(gps_med_exp1(:,1) ~= 0);
 gps_med_m = [];
 j =  1;
 for i = 1:indices_no_cero(end)
     if indices_no_cero(j) == i
-        gps_med_m(i,1) = coord_XY(j,1); % Guardar el valor si es distinto de cero
-        gps_med_m(i,2) = coord_XY(j,2); % Guardar el valor si es distinto de cero
+        gps_med_m(i,1) = coord_XY_med(j,1); % Guardar el valor si es distinto de cero
+        gps_med_m(i,2) = coord_XY_med(j,2); % Guardar el valor si es distinto de cero
         j = j + 1;
     else
         gps_med_m(i,1) = 0; % Guardar el valor si es distinto de cero
@@ -137,7 +138,7 @@ for k=1:N
         k_gps = k_gps + 1; % gps ON
     end
 
-    if (gps_disp(k) ~= 0 && mod(k_gps, 30) == 0)
+    if (gps_disp(k) ~= 0 && mod(k_gps, 100) == 0)
         gps_std = 1; % gps ON
 
         cont_gps = cont_gps + 1;
@@ -186,14 +187,14 @@ for k=1:N
 end
 
 %% calculo de angulos de mediciones GPS
-for i=3:length(coord_XY((1:end),1))
+for i=3:length(coord_XY_med((1:end),1))
     ref = [0, 1];  
     if i==1
         v1 = [0, 0];
     else
-        v1 = [coord_XY(i-1,1), coord_XY(i-1,2)];
+        v1 = [coord_XY_med(i-1,1), coord_XY_med(i-1,2)];
     end
-    v2 = [coord_XY(i,1), coord_XY(i,2)]; 
+    v2 = [coord_XY_med(i,1), coord_XY_med(i,2)]; 
     v = v2 - v1;
     % Calcular el producto punto entre el vector v y el eje x
     dot_product = dot(v, ref);
@@ -219,9 +220,11 @@ if onFig == 1
     figure(1)
     plot(s1,s2, "b")
     hold on
-    plot(coord_XY(:,1), coord_XY(:,2), "black") 
+    plot(coord_XY_med(:,1), coord_XY_med(:,2), "black") 
+    plot(coord_XY_true(:,1), coord_XY_true(:,2), "r") 
+
     title("Posición MR-EKF")
-    legend("MPU9250" , "GPS")
+    legend("MPU9250" , "GPS", "True")
     hold off
     
     figure(2)
