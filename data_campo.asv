@@ -1,0 +1,21 @@
+% dataIMU.m
+clear 
+clc
+close all
+
+dir = pwd;
+gps_campo = readtable([dir, '\datos\datos_campo\20240531155013'])
+
+lat_campo = table2array(gps_campo(:,6));
+
+
+lon_campo = table2array(gps_campo(:,9));
+
+% figure
+% plot(lat_campo, lon_campo)
+
+
+lat_campo = table2array(gps_campo(1,6))
+str = strrep(lat_campo, ',', '')
+
+str2double(str)
