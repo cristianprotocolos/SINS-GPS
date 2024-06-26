@@ -1,14 +1,19 @@
 % dataIMU.m
 dir = pwd;
-data_imu = readmatrix([dir, '\datos\1_exp.csv']);
-gps_med_exp1 = readmatrix([dir, '\datos\gps_med_exp1.csv']);
+data = readmatrix([dir, '\datos\testIsC.csv']);
+nData = 5000:8000;
+
+data_imu = data(:, 1:22);
+% data_gps = readmatrix([dir, '\datos\gps_med_exp1.csv']);
+data_gps = data(:, 23:24);
+
 true_gps_exp1 = readmatrix([dir, '\datos\true_gps_exp1.csv']);
 
-lat_NZ = nonzeros(gps_med_exp1(:,1));
-log_NZ = nonzeros(gps_med_exp1(:,2));
+lat_NZ = nonzeros(data_gps(:,1));
+log_NZ = nonzeros(data_gps(:,2));
 
-for i=1:length(gps_med_exp1(:,1))
-    if (gps_med_exp1(i,1) ~= 0)
+for i=1:length(data_gps(:,1))
+    if (data_gps(i,1) ~= 0)
         gps_disp(i) = 1;
     else
         gps_disp(i) = 0;

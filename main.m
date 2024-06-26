@@ -28,7 +28,7 @@ end
 [dist_med, desp_med, coord_XY_med] = gps_med2m(gps_med_NZ);
 [dist_true, desp_true, coord_XY_true] = gps_med2m(true_gps_exp1);
 
-indices_no_cero = find(gps_med_exp1(:,1) ~= 0);
+indices_no_cero = find(data_gps(:,1) ~= 0);
 gps_med_m = [];
 j =  1;
 for i = 1:indices_no_cero(end)
@@ -138,7 +138,7 @@ for k=1:N
         k_gps = k_gps + 1; % gps ON
     end
 
-    if (gps_disp(k) ~= 0 && mod(k_gps, 50) == 0)
+    if (gps_disp(k) ~= 0 && mod(k_gps, 40) == 0)
         gps_std = 1; % gps ON
 
         cont_gps = cont_gps + 1;
@@ -217,11 +217,12 @@ N / (cont_gps * 10)
 %% FIGURAS
 onFig = 1;
 if onFig == 1
+
     figure(1)
     plot(s1,s2, "b")
     hold on
     plot(coord_XY_med(:,1), coord_XY_med(:,2), "black") 
-    plot(coord_XY_true(:,1), coord_XY_true(:,2), "r") 
+    %plot(coord_XY_true(:,1), coord_XY_true(:,2), "r") 
 
     title("Posición MR-EKF")
     legend("MPU9250" , "GPS", "True")
