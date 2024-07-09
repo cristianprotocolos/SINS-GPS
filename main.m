@@ -186,7 +186,7 @@ for k=1:N
 
     m_k = [gps_med_m(k,:) acc_b mag_b]'; % Vector de mediciones {x_gps , y_gps, acc(x,y,z), mag(x,y,z)}
     K_k = P_pred * H' * inv(H * P_pred * H' + R_k)
-    x_h = x_pred + K_k * (m_k - z_pred); % Estimación de estados MR-EKF
+    x_h = x_pred + K_k * (m_k - z_pred) % Estimación de estados MR-EKF
     P_h = ( eye(13,13) - K_k * H ) * P_pred;
     %% fin del MR-EKF
 

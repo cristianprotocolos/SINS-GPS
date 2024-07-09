@@ -54,30 +54,32 @@ Sy_body = zeros(1,N);
 Sz_body = zeros(1,N);
 
 %% Matrices y vectores del multi-rate filtro de Kalman extendido
-x_h = [0 0 0 , 0 0 0 , 1 0 0 0 , 0 0 0]'; % x_h = [s1 s2 s3 v1 v2 v3 q0 q1 q2 q3 bias(x,y,z)] inicializacion  
-I = eye(3);
-O = zeros(3,3);
-Cs = 1; % Condicion de parada
+x_h = [1 0 0 0 0 0 0 zeros(1,8)]';
+
+I = eye(2);
+O = zeros(2);
+
+Cs = zeros(1, N); % Condicion de parada
 eul = 0;
 delta_k = eye(8); % tamaño definido por la cantidad de mediciones posibles: x_gps, y_gps, acc(3) y b(3), total 9
 gps_std = 1;
 imu_std = 1;
 aw_k = [0 0 0]';
-P_h = eye(13,13)*1e3;
+P_h = eye(15)*1e3;
 
-Q_k = eye(13,13)*1e-5;
-R_k = eye(8,8)*1e-3;
+Q_k = eye(15)*1e-5;
+R_k = eye(8)*1e-3;
 
 %% Parametros condiones C1, C2 y C3
 % C1
-thrhd_amin = 0.9;
-thrhd_amax = 1.1;
+thrhd_amin = -0.150;
+thrhd_amax = 0.150;
 % C2
 thrhdS = 0.1;
 s = 5; % ventana de promedio de tamaño 5
 window_size = 2*s + 1;
 % C3
-thrhdwmax = 0.1;
+thrhdwmax = 0.2;
 
 k_gps = 1;
 
