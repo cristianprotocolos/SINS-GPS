@@ -17,13 +17,16 @@ bias_a = [th_acc(10) th_acc(11) th_acc(12)]';
 
 %% parametros de calibracion del magnetometro 
 
+th_mag = [0.00756123818798812	0.00750216420284704	0.00757777259204762, ...
+         69.9366643650663	61.4169532692069	88.4271633142602]; %% MPU9250 caja negra
+
 % k_mag = 110;
 % figure(1)
 % subplot(3,1,1), plot( (bm(:,1) +  45) / k_mag)
 % subplot(3,1,2), plot( (bm(:,2) - 141) / k_mag)
 % subplot(3,1,3), plot( (bm(:,3) + 300) / k_mag)
 
-th_mag = [1/110 1/110 1/110 -45 +141 -300]; %% MPU9250
+%th_mag = [1/110 1/110 1/110 -45 +141 -300]; %% MPU9250
 k_mag = diag([th_mag(1) th_mag(2) th_mag(3)]);
 bias_mag = [th_mag(4) th_mag(5) th_mag(6)]';
 
@@ -72,8 +75,8 @@ R_k = eye(8)*1e-3;
 
 %% Parametros condiones C1, C2 y C3
 % C1
-thrhd_amin = -0.150;
-thrhd_amax = 0.150;
+thrhd_amin = -0.182731733441106 - 0.05*0.182731733441106;
+thrhd_amax = 0.182731733441106 + 0.05*0.182731733441106;
 % C2
 thrhdS = 0.1;
 s = 5; % ventana de promedio de tamaño 5

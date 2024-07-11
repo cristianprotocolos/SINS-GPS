@@ -148,7 +148,7 @@ for k=1:N
         k_gps = k_gps + 1; % gps ON
     end
 
-    if (gps_disp(k) ~= 0 && mod(k_gps, 100) == 0)
+    if (gps_disp(k) ~= 0 && mod(k_gps, 200) == 0)
         gps_std = 1; % gps ON
 
         cont_gps = cont_gps + 1;
