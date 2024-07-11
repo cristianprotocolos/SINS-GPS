@@ -66,11 +66,7 @@ for k=1:N
     q1 = x_h(2);
     q2 = x_h(3);
     q3 = x_h(4);
-    
-    q = [q0 q1 q2 q3];
-    eulerAngles = quaternionToEulerAngles(q);
-    yaw(k) = eulerAngles(3);
-
+   
     q0_v(k) = x_h(1);
     q1_v(k) = x_h(2);
     q2_v(k) = x_h(3);
@@ -190,11 +186,12 @@ for k=1:N
     v_std = [ ones(2,1)*gps_std]; % Vector de disponibilidad de mediciones
     delta_k = diag(v_std); % Matriz de disponibilidad de mediciones
 
+    delta_k = 1;
 
     A_k = [A_q zeros(7,8) ; zeros(8,7) A_p]; % Matriz de Transición parcial del MR-EKF
     B_k = [B_q zeros(7,3) ; zeros(8,3) B_p]; % Matriz de control
 
-    C_k = [C_q zeros(6,8) ; zeros(2,7) delta_k*C_p];
+    C_k = [C_q zeros(6,8) ; zeros(2,7) C_p];
     u_k = [u_q ; u_p];
 
     % Prediccion MR-EKF
@@ -208,7 +205,7 @@ for k=1:N
     acc_b = [a_bx(k) a_by(k) a_bz(k)]; % Acelerometro  
     mag_b = [mag_bx(k) mag_by(k) mag_bz(k)]; % Magnetometro
 
-    y_med = [acc_b mag_b delta_k(1) * gps_med_m(k,:)]'; % Vector de mediciones {x_gps , y_gps, acc(x,y,z), mag(x,y,z)}
+    y_med = [acc_b mag_b gps_med_m(k,:)]'; % Vector de mediciones {x_gps , y_gps, acc(x,y,z), mag(x,y,z)}
 
     K_k = P_pred * C_k' * inv(C_k * P_pred * C_k' + R_k);
 
@@ -222,34 +219,19 @@ for k=1:N
     s1(k) = x_h(8);
     s2(k) = x_h(9);
 
+    
+
+    if x_h(10) > thvmax || x_h(10) < thvmin
+        x_h(10) = v1(k-1);
+    end
+
+    if x_h(11) > thvmax || x_h(11) < thvmin
+        x_h(11) = v2(k-1);
+    end
+    
     v1(k) = x_h(10);
     v2(k) = x_h(11);
 end
-
-%% calculo de angulos de mediciones GPS
-% for i=3:length(coord_XY_med((1:end),1))
-%     ref = [0, 1];  
-%     if i==1
-%         v1 = [0, 0];
-%     else
-%         v1 = [coord_XY_med(i-1,1), coord_XY_med(i-1,2)];
-%     end
-%     v2 = [coord_XY_med(i,1), coord_XY_med(i,2)]; 
-%     v = v2 - v1;
-%     % Calcular el producto punto entre el vector v y el eje x
-%     dot_product = dot(v, ref);
-%     % Calcular la magnitud de los vectores
-%     magnitude_v = norm(v);
-%     magnitude_x_axis = norm(ref);
-%     % Calcular el ángulo usando la definición del producto punto
-%     cos_theta = dot_product / (magnitude_v * magnitude_x_axis);
-%     % Calcular el ángulo en radianes
-%     theta_rad = acos(cos_theta);
-%     % Convertir el ángulo a grados
-%     theta_deg = rad2deg(theta_rad);
-%     angleGPS(i) = theta_deg;
-%     
-% end
 
 % polos = eig(A - LC)
 cont_gps
@@ -284,10 +266,10 @@ if onFig == 1
 %     subplot(4,1,4), plot(qc_bno(:,4)), ylim([-1 1]);
 %     title("Cuaterniones BNO055")
 % 
-%     figure(4)
-%     subplot(2,1,1), plot(v1), ylim([-2 2]);
-%     subplot(2,1,2), plot(v2), ylim([-2 2]);
-%     title("Velocidades x y")
+    figure(4)
+    subplot(2,1,1), plot(v1)
+    subplot(2,1,2), plot(v2)
+    title("Velocidades x y")
 % 
 %     figure(5), plot(yaw)
 % 
@@ -331,35 +313,3 @@ plot(s1(ini:end)), hold on, plot(gps_x(ini:end)), legend('IMU','GPS'), title('s_
 figure
 plot(s2(ini:end)), hold on, plot(gps_y(ini:end)), legend('IMU','GPS'), title('s_2 vs gps_y')
 
-function eulerAngles = quaternionToEulerAngles(q)
-    % Esta función convierte un cuaternión a ángulos de Euler (radianes).
-    % El cuaternión q debe estar en la forma [w, x, y, z].
-
-    % Extraer los componentes del cuaternión
-    w = q(1);
-    x = q(2);
-    y = q(3);
-    z = q(4);
-
-    % Calcular los ángulos de Euler
-    % Roll (phi)
-    sinr_cosp = 2 * (w * x + y * z);
-    cosr_cosp = 1 - 2 * (x * x + y * y);
-    roll = atan2(sinr_cosp, cosr_cosp);
-
-    % Pitch (theta)
-    sinp = 2 * (w * y - z * x);
-    if abs(sinp) >= 1
-        pitch = sign(sinp) * pi / 2; % Utilizar 90 grados si fuera de rango
-    else
-        pitch = asin(sinp);
-    end
-
-    % Yaw (psi)
-    siny_cosp = 2 * (w * z + x * y);
-    cosy_cosp = 1 - 2 * (y * y + z * z);
-    yaw = atan2(siny_cosp, cosy_cosp);
-
-    % Devolver los ángulos de Euler
-    eulerAngles = [roll, pitch, yaw];
-end

@@ -177,7 +177,7 @@ for k=1:N
         k_gps = k_gps + 1; % gps ON
     end
 
-    if (gps_disp(k) ~= 0 && mod(k_gps, periodoGPS) == 0)
+    if (gps_disp(k) ~= 0 && mod(k_gps, 200) == 0)
         gps_std = 1; % gps ON
 
         cont_gps = cont_gps + 1;
@@ -315,21 +315,14 @@ gps_y = interp1(T_gps, coord_XY_med(:,2), T_fk);
 
 % figure(2), plot(gps_x, gps_y)
 
-ini = 2000;
-
-ERROR_X = sum(sqrt((s1(ini:end) - gps_x(ini:end)).^2))/length(s1)
-ERROR_Y = sum(sqrt((s2(ini:end) - gps_y(ini:end)).^2))/length(s2)
-
-ERROR_MAX_X = max(sqrt((s1(ini:end) - gps_x(ini:end)).^2))
-ERROR_MAX_Y = max(sqrt((s2(ini:end) - gps_y(ini:end)).^2))
-
-[M,I] = max(sqrt((s1(ini:end) - gps_x(ini:end)).^2))
+ERROR_X = sum(sqrt((s1(1500) - gps_x).^2))/length(s1)
+ERROR_Y = sum(sqrt((s2 - gps_y).^2))/length(s2)
 
 figure
-plot(s1(ini:end)), hold on, plot(gps_x(ini:end)), legend('IMU','GPS'), title('s_1 vs gps_x')
+plot(s1), hold on, plot(gps_x)
 
 figure
-plot(s2(ini:end)), hold on, plot(gps_y(ini:end)), legend('IMU','GPS'), title('s_2 vs gps_y')
+plot(s2), hold on, plot(gps_y)
 
 function eulerAngles = quaternionToEulerAngles(q)
     % Esta función convierte un cuaternión a ángulos de Euler (radianes).
