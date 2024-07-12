@@ -50,19 +50,16 @@ end
 %% EKF
 for k=1:N
     %% Modelo de predicion de orientacion
-    q0 = x_h(1);
-    q1 = x_h(2);
-    q2 = x_h(3);
-    q3 = x_h(4);
-    
-    q = [q0 q1 q2 q3];
-    eulerAngles = quaternionToEulerAngles(q);
-    yaw(k) = eulerAngles(3);
+    q0 = x_h(1,k);
+    q1 = x_h(2,k);
+    q2 = x_h(3,k);
+    q3 = x_h(4,k);
+   
 
-    q0_v(k) = x_h(1);
-    q1_v(k) = x_h(2);
-    q2_v(k) = x_h(3);
-    q3_v(k) = x_h(4);
+    q0_v(k) = x_h(1,k);
+    q1_v(k) = x_h(2,k);
+    q2_v(k) = x_h(3,k);
+    q3_v(k) = x_h(4,k);
 
     bg_x = x_h(5);
     bg_y = x_h(6);
@@ -121,9 +118,10 @@ for k=1:N
         C_3(k) = 0;
      end
 
-    Cs(k) = C_1(k) * C_2(k) * C_3(k); %   
+    % Cs(k) = C_1(k) * C_2(k) * C_3(k); %   
+    Cs(k) = 1; %   
     %% Fin de condiciones
-    
+
     % Matriz de rotacion b --> W 
     R11 = q0^2 + q1^2 - q2^2 - q3^2;
     R12 = 2*(q1*q2 - q0*q3);
@@ -142,9 +140,9 @@ for k=1:N
     %
     u_p = [a_bx(k) a_by(k) a_bz(k)]';
 
-    aw_x(k) = [R11 , R12 , R13] * u_p;
-    aw_y(k) = [R21 , R22 , R23] * u_p;
-    aw_z(k) = [R31 , R32 , R33] * u_p;
+    % aw_x(k) = [R11 , R12 , R13] * u_p;
+    % aw_y(k) = [R21 , R22 , R23] * u_p;
+    % aw_z(k) = [R31 , R32 , R33] * u_p;
 
     A_p = [I I*Ts I O ; O I*Cs(k) O I ; O O I O ; O O O I];
     B_p = [Ts^2/2 * wR_b ; Ts * wR_b ; zeros(2,3); zeros(2,3)];
@@ -179,14 +177,14 @@ for k=1:N
     delta_k = diag(v_std); % Matriz de disponibilidad de mediciones
 
 
-    A_k = [A_q zeros(7,8) ; zeros(8,7) A_p]; % Matriz de Transición parcial del MR-EKF
+    A_k = [A_q zeros(7,8) ; zeros(8,7) A_p]; % Matriz de Transición del MR-EKF
     B_k = [B_q zeros(7,3) ; zeros(8,3) B_p]; % Matriz de control
 
     C_k = [C_q zeros(6,8) ; zeros(2,7) delta_k*C_p];
     u_k = [u_q ; u_p];
 
     % Prediccion MR-EKF
-    x_pred = A_k * x_h + B_k * u_k; % x_h = [pos(1:3) , vel(1:3) , QUAT(1:4) , bias_g(1:3)], dim(13,1)
+    x_pred = A_k * x_h(:, k) + B_k * u_k; % x_h = [pos(1:3) , vel(1:3) , QUAT(1:4) , bias_g(1:3)], dim(13,1)
     y_pred = C_k * x_pred; % dim(8x1)
     
     P_pred = A_k * P_h * A_k' + Q_k;   
@@ -200,20 +198,30 @@ for k=1:N
 
     K_k = P_pred * C_k' * inv(C_k * P_pred * C_k' + R_k);
 
-    x_h = x_pred + K_k * (y_med - y_pred); % Estimación de estados MR-EKF
+    x_h(:, k+1) = x_pred + K_k * (y_med - y_pred); % Estimación de estados MR-EKF
 
     P_h = (eye(15) - K_k * C_k ) * P_pred;
     %% fin del MR-EKF
     k;
     k_cont(k) = k*0.1;
 
-    s1(k) = x_h(8);
-    s2(k) = x_h(9);
+    x_h(10, k+1)
 
-    v1(k) = x_h(10);
-    v2(k) = x_h(11);
+    if abs(x_h(10, k+1)) > th_x
+        x_h(10, k+1) = x_h(10, k);
+    end
+
+    if abs(x_h(11, k+1)) > th_y
+        x_h(11, k+1) = x_h(11, k);
+    end
+
+    
 end
+s1 = x_h(8, :);
+s2 = x_h(9, :);
 
+v1 = x_h(10, :);
+v2 = x_h(11, :);
 %% calculo de angulos de mediciones GPS
 % for i=3:length(coord_XY_med((1:end),1))
 %     ref = [0, 1];  
@@ -272,10 +280,10 @@ if onFig == 1
 %     subplot(4,1,4), plot(qc_bno(:,4)), ylim([-1 1]);
 %     title("Cuaterniones BNO055")
 % 
-%     figure(4)
-%     subplot(2,1,1), plot(v1), ylim([-2 2]);
-%     subplot(2,1,2), plot(v2), ylim([-2 2]);
-%     title("Velocidades x y")
+    figure(4)
+    subplot(2,1,1), plot(v1), ylim([-2 2]);
+    subplot(2,1,2), plot(v2), ylim([-2 2]);
+    title("Velocidades x y")
 % 
 %     figure(5), plot(yaw)
 % 
@@ -319,35 +327,3 @@ plot(s1(ini:end)), hold on, plot(gps_x(ini:end)), legend('IMU','GPS'), title('s_
 figure
 plot(s2(ini:end)), hold on, plot(gps_y(ini:end)), legend('IMU','GPS'), title('s_2 vs gps_y')
 
-function eulerAngles = quaternionToEulerAngles(q)
-    % Esta función convierte un cuaternión a ángulos de Euler (radianes).
-    % El cuaternión q debe estar en la forma [w, x, y, z].
-
-    % Extraer los componentes del cuaternión
-    w = q(1);
-    x = q(2);
-    y = q(3);
-    z = q(4);
-
-    % Calcular los ángulos de Euler
-    % Roll (phi)
-    sinr_cosp = 2 * (w * x + y * z);
-    cosr_cosp = 1 - 2 * (x * x + y * y);
-    roll = atan2(sinr_cosp, cosr_cosp);
-
-    % Pitch (theta)
-    sinp = 2 * (w * y - z * x);
-    if abs(sinp) >= 1
-        pitch = sign(sinp) * pi / 2; % Utilizar 90 grados si fuera de rango
-    else
-        pitch = asin(sinp);
-    end
-
-    % Yaw (psi)
-    siny_cosp = 2 * (w * z + x * y);
-    cosy_cosp = 1 - 2 * (y * y + z * z);
-    yaw = atan2(siny_cosp, cosy_cosp);
-
-    % Devolver los ángulos de Euler
-    eulerAngles = [roll, pitch, yaw];
-end

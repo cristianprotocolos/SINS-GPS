@@ -3,13 +3,6 @@ clear
 clc
 close all
 
-%% tcp/ip 2024
-% server_ip = '192.168.0.167';
-% server_port = 80;
-% 
-% t = tcpserver(server_ip,server_port)
-% data = readline(t)
-
 %% Lectura de datos y valores constante
 dataIMU; % Lectura de DATA SD 
 constantes; % Lectura de constantes
@@ -30,11 +23,6 @@ for i=1:N
     mag_bz(i) = mag_b(3);
     norm_mag(i) = norm(mag_b);
 end
-figure(13)
-subplot(4,1,1), plot(a_bx)
-subplot(4,1,2), plot(a_by)
-subplot(4,1,3), plot(a_bz)
-subplot(4,1,4), plot(norm_acc)
 
 %% calculo distancia, desplazamiento y coordenadas gps en unidades (m)
 [dist_med, desp_med, coord_XY_med] = gps_med2m(gps_med_NZ);
@@ -62,19 +50,19 @@ end
 %% EKF
 for k=1:N
     %% Modelo de predicion de orientacion
-    q0 = x_h(1);
-    q1 = x_h(2);
-    q2 = x_h(3);
-    q3 = x_h(4);
+    q0 = x_h(1,k);
+    q1 = x_h(2,k);
+    q2 = x_h(3,k);
+    q3 = x_h(:,k);
     
     q = [q0 q1 q2 q3];
     eulerAngles = quaternionToEulerAngles(q);
     yaw(k) = eulerAngles(3);
 
-    q0_v(k) = x_h(1);
-    q1_v(k) = x_h(2);
-    q2_v(k) = x_h(3);
-    q3_v(k) = x_h(4);
+    q0_v(k) = x_h(k,1);
+    q1_v(k) = x_h(k,2);
+    q2_v(k) = x_h(k,3);
+    q3_v(k) = x_h(k,4);
 
     bg_x = x_h(5);
     bg_y = x_h(6);
@@ -133,9 +121,19 @@ for k=1:N
         C_3(k) = 0;
      end
 
-    Cs(k) = C_1(k) * C_2(k) * C_3(k); %   
+    % Cs(k) = C_1(k) * C_2(k) * C_3(k); %   
+    Cs(k) = 1; %   
     %% Fin de condiciones
     
+    % if abs(x_h(10)) > th_x
+    %     x_h(10) = Vx_k(k-1);
+    % end
+    % 
+    % if abs(x_h(11)) > th_y
+    %     x_h(11) = Vy_k(k-1);
+    % end
+    % 
+
     % Matriz de rotacion b --> W 
     R11 = q0^2 + q1^2 - q2^2 - q3^2;
     R12 = 2*(q1*q2 - q0*q3);
@@ -177,7 +175,7 @@ for k=1:N
         k_gps = k_gps + 1; % gps ON
     end
 
-    if (gps_disp(k) ~= 0 && mod(k_gps, 200) == 0)
+    if (gps_disp(k) ~= 0 && mod(k_gps, periodoGPS) == 0)
         gps_std = 1; % gps ON
 
         cont_gps = cont_gps + 1;
@@ -212,19 +210,19 @@ for k=1:N
 
     K_k = P_pred * C_k' * inv(C_k * P_pred * C_k' + R_k);
 
-    x_h = x_pred + K_k * (y_med - y_pred); % Estimación de estados MR-EKF
+    x_h(:,k) = x_pred + K_k * (y_med - y_pred); % Estimación de estados MR-EKF
 
     P_h = (eye(15) - K_k * C_k ) * P_pred;
     %% fin del MR-EKF
     k;
     k_cont(k) = k*0.1;
-
-    s1(k) = x_h(8);
-    s2(k) = x_h(9);
-
-    v1(k) = x_h(10);
-    v2(k) = x_h(11);
 end
+%     s1(k) = x_h(8);
+%     s2(k) = x_h(9);
+% 
+%     v1(k) = x_h(10);
+%     v2(k) = x_h(11);
+% end
 
 %% calculo de angulos de mediciones GPS
 % for i=3:length(coord_XY_med((1:end),1))
@@ -284,10 +282,10 @@ if onFig == 1
 %     subplot(4,1,4), plot(qc_bno(:,4)), ylim([-1 1]);
 %     title("Cuaterniones BNO055")
 % 
-%     figure(4)
-%     subplot(2,1,1), plot(v1), ylim([-2 2]);
-%     subplot(2,1,2), plot(v2), ylim([-2 2]);
-%     title("Velocidades x y")
+    figure(4)
+    subplot(2,1,1), plot(v1), ylim([-2 2]);
+    subplot(2,1,2), plot(v2), ylim([-2 2]);
+    title("Velocidades x y")
 % 
 %     figure(5), plot(yaw)
 % 
@@ -315,44 +313,19 @@ gps_y = interp1(T_gps, coord_XY_med(:,2), T_fk);
 
 % figure(2), plot(gps_x, gps_y)
 
-ERROR_X = sum(sqrt((s1(1500) - gps_x).^2))/length(s1)
-ERROR_Y = sum(sqrt((s2 - gps_y).^2))/length(s2)
+ini = 2000;
+
+ERROR_X = sum(sqrt((s1(ini:end) - gps_x(ini:end)).^2))/length(s1)
+ERROR_Y = sum(sqrt((s2(ini:end) - gps_y(ini:end)).^2))/length(s2)
+
+ERROR_MAX_X = max(sqrt((s1(ini:end) - gps_x(ini:end)).^2))
+ERROR_MAX_Y = max(sqrt((s2(ini:end) - gps_y(ini:end)).^2))
+
+[M,I] = max(sqrt((s1(ini:end) - gps_x(ini:end)).^2))
 
 figure
-plot(s1), hold on, plot(gps_x)
+plot(s1(ini:end)), hold on, plot(gps_x(ini:end)), legend('IMU','GPS'), title('s_1 vs gps_x')
 
 figure
-plot(s2), hold on, plot(gps_y)
+plot(s2(ini:end)), hold on, plot(gps_y(ini:end)), legend('IMU','GPS'), title('s_2 vs gps_y')
 
-function eulerAngles = quaternionToEulerAngles(q)
-    % Esta función convierte un cuaternión a ángulos de Euler (radianes).
-    % El cuaternión q debe estar en la forma [w, x, y, z].
-
-    % Extraer los componentes del cuaternión
-    w = q(1);
-    x = q(2);
-    y = q(3);
-    z = q(4);
-
-    % Calcular los ángulos de Euler
-    % Roll (phi)
-    sinr_cosp = 2 * (w * x + y * z);
-    cosr_cosp = 1 - 2 * (x * x + y * y);
-    roll = atan2(sinr_cosp, cosr_cosp);
-
-    % Pitch (theta)
-    sinp = 2 * (w * y - z * x);
-    if abs(sinp) >= 1
-        pitch = sign(sinp) * pi / 2; % Utilizar 90 grados si fuera de rango
-    else
-        pitch = asin(sinp);
-    end
-
-    % Yaw (psi)
-    siny_cosp = 2 * (w * z + x * y);
-    cosy_cosp = 1 - 2 * (y * y + z * z);
-    yaw = atan2(siny_cosp, cosy_cosp);
-
-    % Devolver los ángulos de Euler
-    eulerAngles = [roll, pitch, yaw];
-end

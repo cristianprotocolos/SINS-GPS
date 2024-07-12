@@ -58,7 +58,8 @@ Sy_body = zeros(1,N);
 Sz_body = zeros(1,N);
 
 %% Matrices y vectores del multi-rate filtro de Kalman extendido
-x_h = [1 0 0 0 0 0 0 zeros(1,4) 0.0115 -0.0210 -0.1144 0.1588]';
+x_h(:,1) = [1 0 0 0 0 0 0 zeros(1,4) 0.0115 -0.0210 -0.1144 0.1588]';
+
 
 I = eye(2);
 O = zeros(2);
@@ -89,7 +90,7 @@ k_gps = 1;
 
 cont_gps = 0;
 
-periodoGPS = 10;
+periodoGPS = 2000;
 
 thvmax = 0.9;
 thvmin = -0.9;
@@ -98,3 +99,7 @@ thvmin = -0.9;
 
 tiempo_gps = linspace(1,100, 3900);
 tiempo_imu = linspace(1,100, 20000);
+
+
+th_x = 0.90000;
+th_y = 0.9000;

@@ -76,8 +76,7 @@ for k=inicio:N-1
     Vy_k(k) = Vy_k(k-1) + dt * acc_Wy(k);
     Vz_k(k) = Vz_k(k-1) + dt * acc_Wz(k);
     
-    th_x = 1.3000;
-    th_y = 1.3000;
+    
 
     if abs(Vx_k(k)) > th_x
         Vx_k(k) = Vx_k(k-1);
