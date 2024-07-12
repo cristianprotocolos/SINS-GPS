@@ -3,13 +3,6 @@ clear
 clc
 close all
 
-%% tcp/ip 2024
-% server_ip = '192.168.0.167';
-% server_port = 80;
-% 
-% t = tcpserver(server_ip,server_port)
-% data = readline(t)
-
 %% Lectura de datos y valores constante
 dataIMU; % Lectura de DATA SD 
 constantes; % Lectura de constantes
@@ -30,11 +23,6 @@ for i=1:N
     mag_bz(i) = mag_b(3);
     norm_mag(i) = norm(mag_b);
 end
-figure(13)
-subplot(4,1,1), plot(a_bx)
-subplot(4,1,2), plot(a_by)
-subplot(4,1,3), plot(a_bz)
-subplot(4,1,4), plot(norm_acc)
 
 %% calculo distancia, desplazamiento y coordenadas gps en unidades (m)
 [dist_med, desp_med, coord_XY_med] = gps_med2m(gps_med_NZ);

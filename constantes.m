@@ -33,6 +33,7 @@ bias_mag = [th_mag(4) th_mag(5) th_mag(6)]';
 %% constantes
 g_w = 1; % magnitud aceleración de gravedad
 Ts = 0.1; % tasa de muestreo
+dt = Ts;
 N = length(am);
 T = Ts*N;
 dt_gps = 5;
@@ -92,3 +93,8 @@ periodoGPS = 10;
 
 thvmax = 0.9;
 thvmin = -0.9;
+
+%Tiempos
+
+tiempo_gps = linspace(1,100, 3900);
+tiempo_imu = linspace(1,100, 20000);
