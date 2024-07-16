@@ -11,9 +11,9 @@ constantes;
 %% Calibracion de aceleraciones MPU9250
 for i=1:N
     a_b = S_a * k_a * (am(i,:)' - bias_a);
-    a_x(i) = a_b(1)*1;
-    a_y(i) = a_b(2)*1;
-    a_z(i) = a_b(3)*1;
+    a_x(i) = a_b(1)*g;
+    a_y(i) = a_b(2)*g;
+    a_z(i) = a_b(3)*g;
     magACE(i) = norm(a_b);
 end
 

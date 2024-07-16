@@ -11,9 +11,9 @@ constantes; % Lectura de constantes
 for i=1:N
     % Acelerometro
     a_b = S_a * k_a * (am(i,:)' - bias_a); %% Body Frame
-    a_bx(i) = a_b(1)*1;
-    a_by(i) = a_b(2)*1;
-    a_bz(i) = a_b(3)*1;
+    a_bx(i) = a_b(1)*g;
+    a_by(i) = a_b(2)*g;
+    a_bz(i) = a_b(3)*g;
     norm_acc(i) = norm(a_b);
 
     % Magnetometro
