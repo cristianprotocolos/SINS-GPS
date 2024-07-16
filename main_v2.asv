@@ -7,21 +7,15 @@ close all
 dataIMU; % Lectura de DATA SD 
 constantes; % Lectura de constantes
 
-%% Calibracion de Aceleraciones y Magnetometro body MPU9250
+%% Calibracion de Aceleraciones y Magnetometro en body-frame MPU9250
 for i=1:N
     % Acelerometro
-    a_b = S_a * k_a * (am(i,:)' - bias_a); %% Body Frame
-    a_bx(i) = a_b(1)*1;
-    a_by(i) = a_b(2)*1;
-    a_bz(i) = a_b(3)*1;
-    norm_acc(i) = norm(a_b);
+    a_b(:,i) = S_a * k_a * (am(i,:)' - bias_a); %% Body Frame
+    ab_norm(i) = norm(a_b(:,i));
 
     % Magnetometro
-    mag_b = k_mag * (bm(i,:)' - bias_mag); %% Body Frame
-    mag_bx(i) = mag_b(1);
-    mag_by(i) = mag_b(2);
-    mag_bz(i) = mag_b(3);
-    norm_mag(i) = norm(mag_b);
+    mag_b(:,i) = k_mag * (bm(i,:)' - bias_mag); %% Body Frame
+    mag_norm(i) = norm(mag_b(:,i));
 end
 
 %% calculo distancia, desplazamiento y coordenadas gps en unidades (m)
@@ -53,27 +47,18 @@ for k=1:N
     q0 = x_h(1,k);
     q1 = x_h(2,k);
     q2 = x_h(3,k);
-    q3 = x_h(:,k);
+    q3 = x_h(4,k);
+  
+    bg_x = x_h(5,k);
+    bg_y = x_h(6,k);
+    bg_z = x_h(7,k);
+
+    bias_g = [bg_x bg_y bg_z]';
     
-    q = [q0 q1 q2 q3];
-    eulerAngles = quaternionToEulerAngles(q);
-    yaw(k) = eulerAngles(3);
-
-    q0_v(k) = x_h(k,1);
-    q1_v(k) = x_h(k,2);
-    q2_v(k) = x_h(k,3);
-    q3_v(k) = x_h(k,4);
-
-    bg_x = x_h(5);
-    bg_y = x_h(6);
-    bg_z = x_h(7);
-
     % Coreccion de Bias giroscopio
-    w_x = (w_body(k,1) + bg_x)* Scaling_g;
-    w_y = (w_body(k,2) + bg_y)* Scaling_g;
-    w_z = (w_body(k,3) + bg_z)* Scaling_g;
+    wb(:, k) = Scaling_g * ( wm(k,:)' - bias_g );
+    wb_norm(k) = norm(wb(:, k));
 
-    x_q = [x_h(1) x_h(2) x_h(3) x_h(4) x_h(5) x_h(6) x_h(7)]';
     Q_q = [-q1 -q2 -q3 ; q0 -q3 q2 ; q3 q0 -q1 ; -q2 q1 q0];
     A_q = [eye(4) -Ts/2*Q_q ; zeros(3,4) eye(3)];
     B_q = [Ts/2 * Q_q ; zeros(3)];
@@ -82,15 +67,11 @@ for k=1:N
     C_m = [q3 q2 q1 q0 ; q0 -q1 q2 -q3 ; -q1 -q0 q3 q2];
     C_q = [C_a zeros(3,3) ; C_m zeros(3,3)];
 
-    u_q = [w_x w_y w_z]';
+    u_q = wb(:, k);
 
-    %% Modelo de velocidad y posicion
-
-    %% CONDICIONES
-    a_norm(k) = sqrt(a_bx(k)^2 + a_bx(k)^2 + a_bx(k)^2); 
-    w_norm(k) = sqrt(w_x^2 + w_y^2 + w_z^2);
+    %% CONDICIONES de detección de movimiento Modelo de velocidad y posicion    
     %% condicion 1: thrhd_amin = 1.1; thrhd_amax = 0.9;    
-    if ( thrhd_amin < a_norm(k) && thrhd_amax > a_norm(k) )
+    if ( thrhd_amin < ab_norm(k)*g  && thrhd_amax > ab_norm(k)*g )
         C_1(k) = 1;
     else
         C_1(k) = 0;
@@ -109,31 +90,22 @@ for k=1:N
     
     % Calcular la varianza cuadrática media
     sigma_sq(k) = diff_square_mean / window_size;
-    if ( w_norm(k) < thrhdS )
+    if ( wb_norm(k) < thrhdS )
         C_2(k) = 1;
     else
         C_2(k) = 0;
     end
     %% condicion 3: 
-     if ( w_norm(k) < thrhdwmax )
+     if ( wb_norm(k) < thrhdwmax )
         C_3(k) = 1;
      else
         C_3(k) = 0;
      end
 
-    % Cs(k) = C_1(k) * C_2(k) * C_3(k); %   
-    Cs(k) = 1; %   
+    Cs(k) = ~(C_1(k) * C_2(k) * C_3(k)); %   
     %% Fin de condiciones
-    
-    % if abs(x_h(10)) > th_x
-    %     x_h(10) = Vx_k(k-1);
-    % end
-    % 
-    % if abs(x_h(11)) > th_y
-    %     x_h(11) = Vy_k(k-1);
-    % end
-    % 
 
+    %% Modelo de predicion de posición
     % Matriz de rotacion b --> W 
     R11 = q0^2 + q1^2 - q2^2 - q3^2;
     R12 = 2*(q1*q2 - q0*q3);
@@ -149,25 +121,11 @@ for k=1:N
     wR_b = [R11 , R12 , R13;
             R21, R22 , R23];
 
-    %
-    u_p = [a_bx(k) a_by(k) a_bz(k)]';
-
-    aw_x(k) = [R11 , R12 , R13] * u_p;
-    aw_y(k) = [R21 , R22 , R23] * u_p;
-    aw_z(k) = [R31 , R32 , R33] * u_p;
+    u_p = a_b(:,i) * g; % medicion de aceleracion en unidades de m/s^2
 
     A_p = [I I*Ts I O ; O I*Cs(k) O I ; O O I O ; O O O I];
     B_p = [Ts^2/2 * wR_b ; Ts * wR_b ; zeros(2,3); zeros(2,3)];
     C_p = [I zeros(2,6)];
-
-    
-    % figure(12), 
-    % subplot(3,1,1),plot(aw_x), ylim([-0.5 0.5]), xlim([k-50 k])
-    % 
-    % subplot(3,1,2),plot(aw_y), ylim([-0.5 0.5]), xlim([k-50 k])
-    % 
-    % subplot(3,1,3),plot(aw_z), ylim([0.3 1.3]), xlim([k-50 k])
-   
    
     %% INICIO MULTI-RATE EXTENDED FILTER KALMAN (MR-EFK)
     % comprueba si hay una medicion de gps disponible
@@ -175,7 +133,7 @@ for k=1:N
         k_gps = k_gps + 1; % gps ON
     end
 
-    if (gps_disp(k) ~= 0 && mod(k_gps, periodoGPS) == 0)
+    if (gps_disp(k) ~= 0 && mod(k_gps, periodoGPS) == 1)
         gps_std = 1; % gps ON
 
         cont_gps = cont_gps + 1;
@@ -188,68 +146,37 @@ for k=1:N
     v_std = [ ones(2,1)*gps_std]; % Vector de disponibilidad de mediciones
     delta_k = diag(v_std); % Matriz de disponibilidad de mediciones
 
-
-    A_k = [A_q zeros(7,8) ; zeros(8,7) A_p]; % Matriz de Transición parcial del MR-EKF
+    A_k = [A_q zeros(7,8) ; zeros(8,7) A_p]; % Matriz de Transición del MR-EKF
     B_k = [B_q zeros(7,3) ; zeros(8,3) B_p]; % Matriz de control
 
     C_k = [C_q zeros(6,8) ; zeros(2,7) delta_k*C_p];
     u_k = [u_q ; u_p];
 
     % Prediccion MR-EKF
-    x_pred = A_k * x_h + B_k * u_k; % x_h = [pos(1:3) , vel(1:3) , QUAT(1:4) , bias_g(1:3)], dim(13,1)
+    x_pred = A_k * x_h(:, k) + B_k * u_k; % x_h = [pos(1:3) , vel(1:3) , QUAT(1:4) , bias_g(1:3)], dim(13,1)
     y_pred = C_k * x_pred; % dim(8x1)
     
     P_pred = A_k * P_h * A_k' + Q_k;   
 
     % Correccion MR-EKF
-    % Medición de acelerometro y magnetometro respectivamente (body-frame)
-    acc_b = [a_bx(k) a_by(k) a_bz(k)]; % Acelerometro  
-    mag_b = [mag_bx(k) mag_by(k) mag_bz(k)]; % Magnetometro
-
-    y_med = [acc_b mag_b delta_k(1) * gps_med_m(k,:)]'; % Vector de mediciones {x_gps , y_gps, acc(x,y,z), mag(x,y,z)}
+    y_med = [a_b(:,i)' mag_b(:,i)' delta_k(1) * gps_med_m(k,:)]'; % Vector de mediciones {acc(x,y,z), mag(x,y,z) , x_gps , y_gps}
 
     K_k = P_pred * C_k' * inv(C_k * P_pred * C_k' + R_k);
 
-    x_h(:,k) = x_pred + K_k * (y_med - y_pred); % Estimación de estados MR-EKF
+    x_h(:, k+1) = x_pred + K_k * (y_med - y_pred); % Estimación de estados MR-EKF
 
     P_h = (eye(15) - K_k * C_k ) * P_pred;
     %% fin del MR-EKF
     k;
     k_cont(k) = k*0.1;
+
 end
-%     s1(k) = x_h(8);
-%     s2(k) = x_h(9);
-% 
-%     v1(k) = x_h(10);
-%     v2(k) = x_h(11);
-% end
+s1 = x_h(8, :);
+s2 = x_h(9, :);
 
-%% calculo de angulos de mediciones GPS
-% for i=3:length(coord_XY_med((1:end),1))
-%     ref = [0, 1];  
-%     if i==1
-%         v1 = [0, 0];
-%     else
-%         v1 = [coord_XY_med(i-1,1), coord_XY_med(i-1,2)];
-%     end
-%     v2 = [coord_XY_med(i,1), coord_XY_med(i,2)]; 
-%     v = v2 - v1;
-%     % Calcular el producto punto entre el vector v y el eje x
-%     dot_product = dot(v, ref);
-%     % Calcular la magnitud de los vectores
-%     magnitude_v = norm(v);
-%     magnitude_x_axis = norm(ref);
-%     % Calcular el ángulo usando la definición del producto punto
-%     cos_theta = dot_product / (magnitude_v * magnitude_x_axis);
-%     % Calcular el ángulo en radianes
-%     theta_rad = acos(cos_theta);
-%     % Convertir el ángulo a grados
-%     theta_deg = rad2deg(theta_rad);
-%     angleGPS(i) = theta_deg;
-%     
-% end
+v1 = x_h(10, :);
+v2 = x_h(11, :);
 
-% polos = eig(A - LC)
 cont_gps
 N / (cont_gps * 10)
 disp(sprintf("Tiempos de correccion %d" , N / (cont_gps * 10)))
@@ -268,20 +195,20 @@ if onFig == 1
     legend("MPU9250" , "GPS", "True")
     hold off
     
-%     figure(2)
-%     subplot(4,1,1), plot(-q3_v), ylim([-1 1]);
-%     subplot(4,1,2), plot(q1_v), ylim([-1 1]);
-%     subplot(4,1,3), plot(q2_v), ylim([-1 1]);
-%     subplot(4,1,4), plot(-q0_v), ylim([-1 1]);
-%     title("Cuaterniones MR-EKF")
-% %     
-%     figure(3)
-%     subplot(4,1,1), plot(qc_bno(:,1)), ylim([-1 1]);
-%     subplot(4,1,2), plot(qc_bno(:,2)), ylim([-1 1]);
-%     subplot(4,1,3), plot(qc_bno(:,3)), ylim([-1 1]);
-%     subplot(4,1,4), plot(qc_bno(:,4)), ylim([-1 1]);
-%     title("Cuaterniones BNO055")
-% 
+    figure(2)
+    subplot(4,1,1), plot(-x_h(4, :)), ylim([-1 1]);
+    subplot(4,1,2), plot(x_h(2, :)), ylim([-1 1]);
+    subplot(4,1,3), plot(q2_v), ylim([-1 1]);
+    subplot(4,1,4), plot(-q0_v), ylim([-1 1]);
+    title("Cuaterniones MR-EKF")
+     
+    figure(3)
+    subplot(4,1,1), plot(qc_bno(:,1)), ylim([-1 1]);
+    subplot(4,1,2), plot(qc_bno(:,2)), ylim([-1 1]);
+    subplot(4,1,3), plot(qc_bno(:,3)), ylim([-1 1]);
+    subplot(4,1,4), plot(qc_bno(:,4)), ylim([-1 1]);
+    title("Cuaterniones BNO055")
+
     figure(4)
     subplot(2,1,1), plot(v1), ylim([-2 2]);
     subplot(2,1,2), plot(v2), ylim([-2 2]);
@@ -296,12 +223,18 @@ if onFig == 1
 %     %     end
 %     % end
 %     figure(6), plot(abs(yawDeg))
+
+    figure(12), 
+    subplot(4,1,1),plot(a_b(1,:))
+    subplot(4,1,2),plot(a_b(2,:))
+    subplot(4,1,3),plot(a_b(3,:))
+    subplot(4,1,4),plot(ab_norm)
 end
 
 c1_sum = sum(C_1);
 c2_sum = sum(C_2);
 c3_sum = sum(C_3);
-Cs_sum = sum(Cs);
+Cs_sum = sum(Cs)
 
 %% ERRORES
 T_gps = linspace(1,100, length(coord_XY_med(:,1)));

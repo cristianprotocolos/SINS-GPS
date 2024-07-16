@@ -10,6 +10,7 @@ th_acc = [0.00348071285001877, -0.000785715436595477, -0.00304916604691251, ...
 %          -0.00166593786338318, 0.00132809919438384, 0.00167220420183682, ... 
 %          0.00103606586064220, 0.0010356721689052, 0.00103210836111909, ... 
 %           8.31847270472375, -21.9462961335939, 20.5860087074609]; %% BNO055
+g = 9.81;
 
 S_a = [ 1 th_acc(1) th_acc(2); th_acc(3) 1 th_acc(4); th_acc(5)	th_acc(6) 1];
 k_a = diag([th_acc(7) th_acc(8) th_acc(9)]);
@@ -31,7 +32,7 @@ k_mag = diag([th_mag(1) th_mag(2) th_mag(3)]);
 bias_mag = [th_mag(4) th_mag(5) th_mag(6)]';
 
 %% constantes
-g = 9.8; % magnitud aceleración de gravedad
+ % magnitud aceleración de gravedad
 Ts = 0.1; % tasa de muestreo
 dt = Ts;
 N = length(am);
@@ -72,13 +73,16 @@ imu_std = 1;
 aw_k = [0 0 0]';
 P_h = eye(15)*1e3;
 
-Q_k = eye(15)*1e-5;
+Q_k = eye(15)*1e-3;
 R_k = eye(8)*1e-3;
 
 %% Parametros condiones C1, C2 y C3
 % C1
-thrhd_amin = -0.182731733441106 - 0.05*0.182731733441106;
-thrhd_amax = 0.182731733441106 + 0.05*0.182731733441106;
+
+g_mean = 9.947280674519526;
+
+thrhd_amin = -g_mean - 0.05*g_mean;
+thrhd_amax =  g_mean + 0.05*g_mean;
 % C2
 thrhdS = 0.1;
 s = 5; % ventana de promedio de tamaño 5
@@ -90,7 +94,7 @@ k_gps = 1;
 
 cont_gps = 0;
 
-periodoGPS = 2000;
+periodoGPS = 130;
 
 thvmax = 0.9;
 thvmin = -0.9;

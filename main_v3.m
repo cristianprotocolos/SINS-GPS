@@ -11,9 +11,9 @@ constantes;
 %% Calibracion de aceleraciones MPU9250
 for i=1:N
     a_b = S_a * k_a * (am(i,:)' - bias_a);
-    a_x(i) = a_b(1)*g;
-    a_y(i) = a_b(2)*g;
-    a_z(i) = a_b(3)*g;
+    a_x(i) = a_b(1);
+    a_y(i) = a_b(2);
+    a_z(i) = a_b(3);
     magACE(i) = norm(a_b);
 end
 
@@ -34,16 +34,16 @@ for k=1:N
     acc_W = wR_b * acc_b;
      
     % Vectores de aceleraciones calibradas (WORLD)
-    acc_Wx(k) = acc_W(1)*g_w;
-    acc_Wy(k) = acc_W(2)*g_w;
-    acc_Wz(k) = acc_W(3)*g_w;    
+    acc_Wx(k) = acc_W(1);
+    acc_Wy(k) = acc_W(2);
+    acc_Wz(k) = acc_W(3);    
 
 end    
 
 acc_W = [-acc_Wx; -acc_Wy; acc_Wz];
 
 % Elimina componente de gravedad del eje Zw
-acc_Wz = acc_Wz + g_w;
+acc_Wz = acc_Wz - g;
 
 %% calculo distancia, desplazamiento y coordenadas gps en unidades (m)
 [dist_med, desp_med, coord_XY_med] = gps_med2m(gps_med_NZ);
