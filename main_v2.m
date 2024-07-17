@@ -71,7 +71,7 @@ for k=1:N
 
     %% CONDICIONES de detección de movimiento Modelo de velocidad y posicion    
     %% condicion 1: thrhd_amin = 1.1; thrhd_amax = 0.9;    
-    if ( thrhd_amin < ab_norm(k)*g  && thrhd_amax > ab_norm(k)*g )
+    if ( thrhd_amin < ab_norm(k) * g_w  && thrhd_amax > ab_norm(k) * g_w )
         C_1(k) = 1;
     else
         C_1(k) = 0;
@@ -120,8 +120,8 @@ for k=1:N
 
     wR_b = [R11 , R12 , R13;
             R21, R22 , R23];
-
-    u_p = a_b(:,i) * g; % medicion de aceleracion en unidades de m/s^2
+    
+    u_p = a_b(:,i) * g_w; % medicion de aceleracion en unidades de m/s^2
 
     A_p = [I I*Ts I O ; O I*Cs(k) O I ; O O I O ; O O O I];
     B_p = [Ts^2/2 * wR_b ; Ts * wR_b ; zeros(2,3); zeros(2,3)];
@@ -148,8 +148,8 @@ for k=1:N
 
     A_k = [A_q zeros(7,8) ; zeros(8,7) A_p]; % Matriz de Transición del MR-EKF
     B_k = [B_q zeros(7,3) ; zeros(8,3) B_p]; % Matriz de control
-
     C_k = [C_q zeros(6,8) ; zeros(2,7) delta_k*C_p];
+
     u_k = [u_q ; u_p];
 
     % Prediccion MR-EKF
@@ -159,7 +159,7 @@ for k=1:N
     P_pred = A_k * P_h * A_k' + Q_k;   
 
     % Correccion MR-EKF
-    y_med = [a_b(:,i)' mag_b(:,i)' delta_k(1) * gps_med_m(k,:)]'; % Vector de mediciones {acc(x,y,z), mag(x,y,z) , x_gps , y_gps}
+    y_med = [a_b(:,k)' mag_b(:,k)'  delta_k(1) *gps_med_m(k,:)]'; % Vector de mediciones {acc(x,y,z), mag(x,y,z) , x_gps , y_gps}
 
     K_k = P_pred * C_k' * inv(C_k * P_pred * C_k' + R_k);
 
@@ -169,6 +169,8 @@ for k=1:N
     %% fin del MR-EKF
     k;
     k_cont(k) = k*0.1;
+
+    x_h(:, k+1);
 
 end
 s1 = x_h(8, :);

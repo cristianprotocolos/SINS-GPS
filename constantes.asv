@@ -10,6 +10,8 @@ th_acc = [0.00348071285001877, -0.000785715436595477, -0.00304916604691251, ...
 %          -0.00166593786338318, 0.00132809919438384, 0.00167220420183682, ... 
 %          0.00103606586064220, 0.0010356721689052, 0.00103210836111909, ... 
 %           8.31847270472375, -21.9462961335939, 20.5860087074609]; %% BNO055
+g = 9.81;
+
 S_a = [ 1 th_acc(1) th_acc(2); th_acc(3) 1 th_acc(4); th_acc(5)	th_acc(6) 1];
 k_a = diag([th_acc(7) th_acc(8) th_acc(9)]);
 bias_a = [th_acc(10) th_acc(11) th_acc(12)]';
@@ -37,7 +39,6 @@ N = length(am);
 T = Ts*N;
 dt_gps = 5;
 correcOn = 1;
-g_w = 9.81;
 
 %% Creacion vectores de velocidad
 Vx_k = zeros(1,N);
@@ -60,44 +61,49 @@ Sz_body = zeros(1,N);
 %% Matrices y vectores del multi-rate filtro de Kalman extendido
 x_h(:,1) = [1 0 0 0 0 0 0 zeros(1,4) 0.0115 -0.0210 -0.1144 0.1588]';
 
+
 I = eye(2);
 O = zeros(2);
 
+Cs = zeros(1, N); % Condicion de parada
 eul = 0;
 delta_k = eye(8); % tamaño definido por la cantidad de mediciones posibles: x_gps, y_gps, acc(3) y b(3), total 9
 gps_std = 1;
 imu_std = 1;
-
+aw_k = [0 0 0]';
 P_h = eye(15)*1e3;
 
-Q_qa = ones(1,7)*1e-4; % asociada al giroscopio
-Q_p = ones(1,8)*1e-1; % asociada al modelo de prediccion de posicion
+Q_k = eye(15)*1e-3;
+R_k = eye(8)*1e-3;
 
-R_q = ones(1,6)*1e-3; % asociada al acelerometro y magnetometro
-R_p = ones(1,2)*1e-3; % asociada al GPS
-
-Q_k = diag([Q_qa , Q_p]);
-R_k = diag([R_q , R_p]);
 %% Parametros condiones C1, C2 y C3
-Cs = zeros(1, N); % Condicion de parada
-aw_k = [0 0 0]';
-thrhd_amin =  g_w - 0.05*g_w;
-thrhd_amax =  g_w + 0.05*g_w;
+% C1
+
+g_mean = 9.947280674519526;
+
+thrhd_amin = -g_mean - 0.05*g_mean;
+thrhd_amax =  g_mean + 0.05*g_mean;
 % C2
 thrhdS = 0.1;
 s = 5; % ventana de promedio de tamaño 5
 window_size = 2*s + 1;
 % C3
 thrhdwmax = 0.1;
+
 k_gps = 1;
+
 cont_gps = 0;
-periodoGPS = 20;
+
+periodoGPS = 130;
+
 thvmax = 0.9;
 thvmin = -0.9;
 
 %Tiempos
+
 tiempo_gps = linspace(1,100, 3900);
 tiempo_imu = linspace(1,100, 20000);
+
 
 th_x = 0.90000;
 th_y = 0.9000;
