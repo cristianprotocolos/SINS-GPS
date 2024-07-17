@@ -70,7 +70,7 @@ imu_std = 1;
 
 P_h = eye(15)*1e3;
 
-Q_qa = ones(1,7)*1e-4; % asociada al giroscopio
+Q_qa = ones(1,7)*1e-3; % asociada al giroscopio
 Q_p = ones(1,8)*1e-1; % asociada al modelo de prediccion de posicion
 
 R_q = ones(1,6)*1e-3; % asociada al acelerometro y magnetometro
@@ -91,13 +91,13 @@ window_size = 2*s + 1;
 thrhdwmax = 0.1;
 k_gps = 1;
 cont_gps = 0;
-periodoGPS = 20;
+periodoGPS = 8;
 thvmax = 0.9;
 thvmin = -0.9;
 
 %Tiempos
-tiempo_gps = linspace(1,100, 3900);
-tiempo_imu = linspace(1,100, 20000);
+tiempo_gps = linspace(1,100, 3900); % mediciones GPS cada 5,12 segundos
+tiempo_imu = linspace(1,100, 20000); % mediciones cada 0,1 segundos
 
 th_x = 0.90000;
 th_y = 0.9000;

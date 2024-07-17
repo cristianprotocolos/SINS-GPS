@@ -14,7 +14,7 @@ for i=1:N
     ab_norm(i) = norm(a_b(:,i));
 
     % Magnetometro
-    mag_b(:,i) = k_mag * (bm(i,:)' - bias_mag); %% Body Frame
+    mag_b(:,i) = k_mag * (bm(i,:)' - bias_mag)*0; %% Body Frame
     mag_norm(i) = norm(mag_b(:,i));
 end
 
@@ -56,7 +56,7 @@ for k=1:N
     bias_g = [bg_x bg_y bg_z]';
     
     % Coreccion de Bias giroscopio
-    wb(:, k) = Scaling_g * ( wm(k,:)' - bias_g ); % ecu 2
+    wb(:, k) =  Scaling_g * ( wm(k,:)' - bias_g ); % ecu 2
     wb_norm(k) = norm(wb(:, k));
 
     Q_q = [-q1 -q2 -q3 ; q0 -q3 q2 ; q3 q0 -q1 ; -q2 q1 q0]; % ecu. 11
@@ -65,7 +65,7 @@ for k=1:N
     
     C_a = [-q2 q3 -q0 q1 ; q1 q0 q3 q2 ; q0 -q1 -q2 q3]; % ecu. 16
     C_m = [q3 q2 q1 q0 ; q0 -q1 q2 -q3 ; -q1 -q0 q3 q2]; % ecu 18
-    C_q = [C_a zeros(3,3) ; C_m zeros(3,3)]; %ecu 19
+    C_q = [C_a zeros(3,3) ; C_m*0 zeros(3,3)]; %ecu 19
 
     u_q = wb(:, k); % ecu 2
 
@@ -198,10 +198,10 @@ if onFig == 1
     hold off
     
     figure(2)
-    subplot(4,1,1), plot(-x_h(4, :)), ylim([-1 1]);
+    subplot(4,1,1), plot(x_h(1, :)), ylim([-1 1]);
     subplot(4,1,2), plot(x_h(2, :)), ylim([-1 1]);
     subplot(4,1,3), plot(x_h(3, :)), ylim([-1 1]);
-    subplot(4,1,4), plot(-x_h(1, :)), ylim([-1 1]);
+    subplot(4,1,4), plot(x_h(4, :)), ylim([-1 1]);
     title("Cuaterniones MR-EKF")
      
     figure(3)
