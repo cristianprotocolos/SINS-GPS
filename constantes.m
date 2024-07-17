@@ -71,7 +71,7 @@ imu_std = 1;
 P_h = eye(15)*1e3;
 
 Q_qa = ones(1,7)*1e-3; % asociada al giroscopio
-Q_p = ones(1,8)*1e-1; % asociada al modelo de prediccion de posicion
+Q_p = ones(1,8)*1e1; % asociada al modelo de prediccion de posicion
 
 R_q = ones(1,6)*1e-3; % asociada al acelerometro y magnetometro
 R_p = ones(1,2)*1e-3; % asociada al GPS
@@ -91,7 +91,7 @@ window_size = 2*s + 1;
 thrhdwmax = 0.1;
 k_gps = 1;
 cont_gps = 0;
-periodoGPS = 8;
+periodoGPS = 20;
 thvmax = 0.9;
 thvmin = -0.9;
 

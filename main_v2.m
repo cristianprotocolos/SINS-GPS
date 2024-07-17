@@ -79,8 +79,9 @@ for k=1:N
     %% condicion 2: 
     % Calcular la suma de los valores dentro de la ventana de promedio
     lower_limit = max(k - s, 1);
-    upper_limit = min(k + s, numel(aw_k));
-    sum_within_window = sum(aw_k(lower_limit:upper_limit));
+    upper_limit = min(k + s, N);
+    
+    sum_within_window = sum(aw_ks(lower_limit:upper_limit))
     
     % Calcular el promedio de los valores dentro de la ventana de promedio
     mean_within_window = sum_within_window / window_size;
@@ -102,7 +103,7 @@ for k=1:N
         C_3(k) = 0;
      end
 
-    Cs(k) = ~(C_1(k) * C_2(k) * C_3(k)); %  ecu 24
+    Cs(k) = ~(C_1(k) * C_2(k) * C_3(k)); %   ecu 24
     %% Fin de condiciones
 
     %% Modelo de predicion de posición
