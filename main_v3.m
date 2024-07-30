@@ -1,5 +1,4 @@
 %% En este script simplificacmos los algoritmos del modelos y ajustamos sus hiperparametros para
-%% encontrar una configuracion que satisface nuestras necesidades
 clear
 clc
 close all

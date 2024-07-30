@@ -56,22 +56,22 @@ for k=1:N
     bias_g = [bg_x bg_y bg_z]';
     
     % Coreccion de Bias giroscopio
-    wb(:, k) = Scaling_g * ( wm(k,:)' - bias_g ); % ecu 2
+    wb(:, k) = Scaling_g * ( wm(k,:)' - bias_g );
     wb_norm(k) = norm(wb(:, k));
 
-    Q_q = [-q1 -q2 -q3 ; q0 -q3 q2 ; q3 q0 -q1 ; -q2 q1 q0]; % ecu. 11
-    A_q = [eye(4) -Ts/2*Q_q ; zeros(3,4) eye(3)]; % ecu. 11
-    B_q = [Ts/2 * Q_q ; zeros(3)]; % ecu. 11
+    Q_q = [-q1 -q2 -q3 ; q0 -q3 q2 ; q3 q0 -q1 ; -q2 q1 q0];
+    A_q = [eye(4) -Ts/2*Q_q ; zeros(3,4) eye(3)];
+    B_q = [Ts/2 * Q_q ; zeros(3)];
     
-    C_a = [-q2 q3 -q0 q1 ; q1 q0 q3 q2 ; q0 -q1 -q2 q3]; % ecu. 16
-    C_m = [q3 q2 q1 q0 ; q0 -q1 q2 -q3 ; -q1 -q0 q3 q2]; % ecu 18
-    C_q = [C_a zeros(3,3) ; C_m zeros(3,3)]; %ecu 19
+    C_a = [-q2 q3 -q0 q1 ; q1 q0 q3 q2 ; q0 -q1 -q2 q3];
+    C_m = [q3 q2 q1 q0 ; q0 -q1 q2 -q3 ; -q1 -q0 q3 q2];
+    C_q = [C_a zeros(3,3) ; C_m zeros(3,3)];
 
-    u_q = wb(:, k); % ecu 2
+    u_q = wb(:, k);
 
     %% CONDICIONES de detección de movimiento Modelo de velocidad y posicion    
     %% condicion 1: thrhd_amin = 1.1; thrhd_amax = 0.9;    
-    if ( thrhd_amin < ab_norm(k) * g_w  && thrhd_amax > ab_norm(k) * g_w ) % ecu 23
+    if ( thrhd_amin < ab_norm(k) * g_w  && thrhd_amax > ab_norm(k) * g_w )
         C_1(k) = 1;
     else
         C_1(k) = 0;
@@ -79,9 +79,8 @@ for k=1:N
     %% condicion 2: 
     % Calcular la suma de los valores dentro de la ventana de promedio
     lower_limit = max(k - s, 1);
-    upper_limit = min(k + s, N);
-    
-    sum_within_window = sum(aw_ks(lower_limit:upper_limit))
+    upper_limit = min(k + s, numel(aw_k));
+    sum_within_window = sum(aw_k(lower_limit:upper_limit));
     
     % Calcular el promedio de los valores dentro de la ventana de promedio
     mean_within_window = sum_within_window / window_size;
@@ -103,7 +102,7 @@ for k=1:N
         C_3(k) = 0;
      end
 
-    Cs(k) = ~(C_1(k) * C_2(k) * C_3(k)); %   ecu 24
+    Cs(k) = ~(C_1(k) * C_2(k) * C_3(k)); %   
     %% Fin de condiciones
 
     %% Modelo de predicion de posición
